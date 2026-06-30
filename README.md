@@ -82,7 +82,7 @@ A escolha do LoRa não é estética: a estação fica onde o tempo está, freque
 ### Diagrama conceitual de blocos
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph EXT["Nó externo (estação) — bateria + solar, deep sleep"]
         S["Sensores<br/>temp · umid · pressão<br/>chuva · luz · vento"] --> E1["ESP32 TX"]
         E1 --> L1["Módulo LoRa"]
