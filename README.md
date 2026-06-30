@@ -7,7 +7,7 @@
 | Integrante | Matrícula |
 |---|---|
 | Bruno Bragança dos Reis | 221007902 |
-| *(preencher nome completo)* | *(matrícula)* |
+| Pablo Serra Carvalho | 221008679 |
 | *(preencher nome completo)* | *(matrícula)* |
 | *(preencher nome completo)* | *(matrícula)* |
 
