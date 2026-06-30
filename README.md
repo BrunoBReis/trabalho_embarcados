@@ -7,7 +7,7 @@
 | Integrante | Matrícula |
 |---|---|
 | Bruno Bragança dos Reis | 221007902 |
-| *(preencher nome completo)* | *(matrícula)* |
+| Pablo Serra Carvalho | 221008679 |
 | *(preencher nome completo)* | *(matrícula)* |
 | *(preencher nome completo)* | *(matrícula)* |
 
@@ -73,7 +73,7 @@ Três tecnologias são determinantes para a viabilidade do produto e orientam a 
 
 A reprodução adota fielmente a arquitetura de **dois nós** do produto original, substituindo o enlace FHSS proprietário por **LoRa** e a nuvem fechada por um **dashboard próprio**:
 
-- **Nó externo (estação):** uma ESP32 conectada ao conjunto de sensores, alimentada por bateria com painel solar. Permanece em *deep sleep* entre leituras; periodicamente acorda, lê os sensores, transmite um pacote LoRa e volta a dormir. Cumpre o papel do ISS.
+- **Nó externo (estação):** uma ESP32 conectada ao conjunto de sensores e alimentada por fonte fixa, cabo USB ou fonte de bancada. Periodicamente lê os sensores e transmite um pacote LoRa ao nó base. Cumpre o papel do ISS, mas sem reproduzir a autonomia energética do produto comercial.
 - **Nó base (gateway):** uma ESP32 com receptor LoRa, instalada em local com energia e Wi-Fi. Recebe o pacote, pode exibi-lo em um display local e o reencaminha por **MQTT** ao dashboard. Cumpre o papel do console.
 - **Dashboard próprio:** plataforma web desenvolvida pelo grupo (broker MQTT, armazenamento e visualização), substituindo a nuvem WeatherLink por uma solução sob nosso controle.
 
@@ -82,8 +82,9 @@ A escolha do LoRa não é estética: a estação fica onde o tempo está, freque
 ### Diagrama conceitual de blocos
 
 ```mermaid
+
 flowchart TD
-    subgraph EXT["Nó externo (estação) — bateria + solar, deep sleep"]
+    subgraph EXT["Nó externo (estação) — alimentação fixa por USB ou fonte"]
         S["Sensores<br/>temp · umid · pressão<br/>chuva · luz · vento"] --> E1["ESP32 TX"]
         E1 --> L1["Módulo LoRa"]
     end
@@ -118,8 +119,6 @@ flowchart TD
 **Faixa de frequência e regulamentação.** Os módulos disponíveis operam em **433 MHz**, adequados para validação em bancada. Entretanto, a faixa ISM destinada a LoRa/LoRaWAN no Brasil pela ANATEL é a **AU915 (902–928 MHz)**. Um produto comercial nacional usaria 915 MHz por conformidade regulatória — exatamente a mesma faixa do ISS norte-americano da Davis.
 
 **Calibração e precisão.** Sensores de baixo custo apresentam erro e deriva, ao contrário dos sensores rastreáveis da Vantage Pro2. A precisão resultante será inferior à do produto comercial.
-
-**Gestão de energia.** Conciliar *deep sleep* agressivo com a janela de recepção do nó base e com a captação solar é um desafio de projeto; o orçamento energético do nó externo precisa ser dimensionado para sobreviver a períodos sem sol.
 
 **Robustez do enlace.** Perda de pacotes LoRa e ausência de ACK no modo ponto-a-ponto exigem estratégia de retransmissão ou tolerância a falhas na aplicação.
 
