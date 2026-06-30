@@ -6,7 +6,7 @@
 
 | Integrante | Matrícula |
 |---|---|
-| *(preencher nome completo)* | *(matrícula)* |
+| Bruno Bragança dos Reis | 221007902 |
 | *(preencher nome completo)* | *(matrícula)* |
 | *(preencher nome completo)* | *(matrícula)* |
 | *(preencher nome completo)* | *(matrícula)* |
@@ -19,7 +19,7 @@
 
 O produto escolhido é a **Davis Vantage Pro2**, uma estação meteorológica sem fio de grau profissional fabricada pela Davis Instruments. Foi selecionada por dois motivos: tem documentação técnica relativamente aberta (manuais públicos e ampla comunidade de engenharia reversa do enlace de rádio) e, principalmente, porque sua arquitetura de **dois módulos** — um conjunto externo de sensores que transmite por rádio sub-GHz para um console interno — é o caso de uso canônico que pretendemos reproduzir com LoRa.
 
-> *(Inserir aqui uma ou mais fotos do produto. Imagem de referência na página oficial: https://www.davisinstruments.com/pages/vantage-pro2)*
+[Davis Vantage Pro2](./assets/davis_vantage_pro2.png)
 
 ### Funções principais, público-alvo e contexto de uso
 
