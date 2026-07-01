@@ -11,7 +11,6 @@
 | João Paulo Barros de Cristo | 202023805 |
 | Lucas Avelar | 200067095 |
 
-> **Nota de preenchimento (remover antes de submeter):** completar a identificação acima; inserir ao menos uma foto da Davis Vantage Pro2 na Seção 1 (arquivo de imagem na pasta do produto — não subir PDFs de artigos); e conferir a lista completa de autores de cada artigo na página do respectivo DOI ao formatar as referências finais.
 
 ---
 
@@ -126,7 +125,6 @@ flowchart TD
 
 ## 4. Pesquisa bibliográfica e tecnológica
 
-> Os resumos abaixo são sínteses próprias do conteúdo de cada artigo. Os links apontam para a página oficial/DOI do artigo; nenhum PDF é hospedado neste repositório.
 
 ### 4.1 Artigos sobre as tecnologias que viabilizam o produto
 
@@ -193,4 +191,3 @@ As referências dos artigos acadêmicos estão listadas na Seção 4, cada uma c
 - Ecowitt — *WS3800/WS3900* e *WS90*: https://shop.ecowitt.com/products/ws3800-ws3900
 - AcuRite, La Crosse Technology, Ambient Weather e WeatherFlow Tempest — páginas oficiais de especificação dos respectivos produtos.
 
-> *(Ao finalizar, substituir as marcações de preenchimento e conferir a lista completa de autores de cada artigo diretamente na página do DOI.)*
