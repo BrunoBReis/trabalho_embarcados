@@ -8,8 +8,8 @@
 |---|---|
 | Bruno Bragança dos Reis | 221007902 |
 | Pablo Serra Carvalho | 221008679 |
-| *(preencher nome completo)* | *(matrícula)* |
-| *(preencher nome completo)* | *(matrícula)* |
+| João Paulo Barros de Cristo | 202023805 |
+| Lucas Avelar | 200067095 |
 
 > **Nota de preenchimento (remover antes de submeter):** completar a identificação acima; inserir ao menos uma foto da Davis Vantage Pro2 na Seção 1 (arquivo de imagem na pasta do produto — não subir PDFs de artigos); e conferir a lista completa de autores de cada artigo na página do respectivo DOI ao formatar as referências finais.
 
