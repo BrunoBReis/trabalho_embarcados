@@ -92,7 +92,6 @@ flowchart TD
 
     subgraph BASE["Nó base (gateway) — energia fixa + Wi-Fi"]
         L2 --> E2["ESP32 RX"]
-        E2 --> D["Display local<br/>(OLED/LCD)"]
         E2 --> W["Wi-Fi"]
     end
 
