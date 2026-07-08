@@ -73,7 +73,7 @@ Três tecnologias são determinantes para a viabilidade do produto e orientam a 
 A reprodução adota fielmente a arquitetura de **dois nós** do produto original, substituindo o enlace FHSS proprietário por **LoRa** e a nuvem fechada por um **dashboard próprio**:
 
 - **Nó externo (estação):** uma ESP32 conectada ao conjunto de sensores e alimentada por fonte fixa, cabo USB ou fonte de bancada. Periodicamente lê os sensores e transmite um pacote LoRa ao nó base. Cumpre o papel do ISS, mas sem reproduzir a autonomia energética do produto comercial.
-- **Nó base (gateway):** uma ESP32 com receptor LoRa, instalada em local com energia e Wi-Fi. Recebe o pacote, pode exibi-lo em um display local e o reencaminha por **MQTT** ao dashboard. Cumpre o papel do console.
+- **Nó base (gateway):** uma ESP32 com receptor LoRa, instalada em local com energia e Wi-Fi. Recebe o pacote e o reencaminha por **MQTT** ao dashboard. Cumpre o papel do console.
 - **Dashboard próprio:** plataforma web desenvolvida pelo grupo (broker MQTT, armazenamento e visualização), substituindo a nuvem WeatherLink por uma solução sob nosso controle.
 
 A escolha do LoRa não é estética: a estação fica onde o tempo está, frequentemente longe do roteador, e o Wi-Fi não vence paredes e distâncias de dezenas a centenas de metros. O dado meteorológico é pequeno (poucos bytes) e esparso (a cada poucos minutos), perfil em que o LoRa é ideal e sua baixa banda é irrelevante. Esse casamento entre o problema de implantação e a tecnologia é o que torna a reprodução coerente com o produto real.
@@ -108,7 +108,6 @@ flowchart TD
 | Chuva | Sensor de chuva | Leitura digital |
 | Luminosidade | LDR (analógico) | Proxy de radiação solar |
 | Velocidade do vento | Reed-switch + ímã | Reproduz o princípio do anemômetro original |
-| Exibição local | OLED 0,98" ou LCD 16x2 (I²C) | No nó base |
 
 ### Limitações e desafios esperados
 
