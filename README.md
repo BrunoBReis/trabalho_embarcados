@@ -84,7 +84,12 @@ A escolha do LoRa não é estética: a estação fica onde o tempo está, freque
 
 flowchart TD
     subgraph EXT["Nó externo (estação) — alimentação fixa por USB ou fonte"]
-        S["Sensores<br/>temp · umid · pressão<br/>chuva · luz · vento"] --> E1["ESP32 TX"]
+        BMP["BMP280<br/>temp · pressão · altitude (I²C)"] --> E1["ESP32 TX"]
+        DHT["DHT11<br/>umidade · temp (digital)"] --> E1
+        RAIN["MH-RD<br/>chuva (AO/DO)"] --> E1
+        LDR["LDR + comparador<br/>luminosidade (AO)"] --> E1
+        REED["Reed-switch + ímã<br/>vento (pulsos)"] --> E1
+        E1 --> LED["LED RGB<br/>status LoRa + sistema"]
         E1 --> L1["Módulo LoRa"]
     end
 
@@ -101,13 +106,28 @@ flowchart TD
 
 ### Mapeamento de sensores (componentes do ecossistema ESP32)
 
-| Grandeza | Componente proposto | Observação |
-|---|---|---|
-| Temperatura + pressão + altitude | BMP280 (I²C) | Núcleo da estação |
-| Umidade + temperatura | Sensor digital de temperatura/umidade | Cobre umidade; redundância em temperatura |
-| Chuva | Sensor de chuva | Leitura digital |
-| Luminosidade | LDR (analógico) | Proxy de radiação solar |
-| Velocidade do vento | Reed-switch + ímã | Reproduz o princípio do anemômetro original |
+| Grandeza / função | Componente | Interface | Observação |
+|---|---|---|---|
+| Temperatura + pressão + altitude | BMP280 | I²C | Núcleo da estação; altitude derivada da pressão |
+| Umidade + temperatura | DHT11 | Digital (1 fio) | Cobre umidade; redundância em temperatura |
+| Chuva | MH-RD (módulo *raindrops*) | Analógico (AO) + digital (DO) | Detecção e intensidade de chuva |
+| Luminosidade | LDR + módulo comparador | Analógico (AO) | Proxy de radiação solar; LDR em PCB separada, ligada por barramento ao módulo |
+| Velocidade do vento | Reed-switch + ímã | Digital (contagem de pulsos) | Reproduz o princípio do anemômetro original |
+| Indicação de status | Módulo LED RGB SMD (3 cores) | 3 GPIO (PWM) | No nó externo; sinaliza enlace LoRa e estado do sistema |
+
+### Descrição dos componentes
+
+**BMP280 (I²C).** Sensor barométrico da Bosch que mede pressão atmosférica e temperatura. A partir da pressão é possível estimar a altitude. É o núcleo da estação por entregar duas grandezas meteorológicas com boa precisão em um único encapsulamento de baixo custo. Não mede umidade (essa é a diferença para o BME280), por isso a umidade fica a cargo do DHT11.
+
+**DHT11.** Sensor digital de umidade relativa e temperatura, com protocolo proprietário de um fio (single-wire). Fornece a umidade do ar — grandeza que o BMP280 não cobre — e uma leitura secundária de temperatura, útil como redundância. É um sensor econômico, com resolução e taxa de amostragem modestas (≈1 leitura/s e precisão da ordem de ±2 °C / ±5 % UR), coerente com o caráter de reprodução didática do projeto.
+
+**LDR + módulo comparador (leitura analógica).** O LDR (resistor dependente de luz) tem resistência que cai conforme a luminosidade aumenta. No nosso hardware o LDR fica em uma PCB separada, conectada por um barramento ao módulo comparador; a ESP32 lê a **saída analógica (AO)** pelo ADC, obtendo um valor proporcional à luz incidente. Essa leitura proporcional funciona como *proxy* de radiação solar (o produto original usa um piranômetro). A saída digital do comparador (limiar claro/escuro) não é usada, pois interessa a intensidade e não apenas o estado liga/desliga.
+
+**Reed-switch + ímã.** Chave magnética que fecha o contato quando o ímã passa próximo. Montada no eixo do anemômetro, gera um pulso por rotação; a ESP32 conta os pulsos por unidade de tempo para inferir a velocidade do vento. É exatamente o princípio do sensor magnético de estado sólido da Vantage Pro2. Requer resistor de *pull-up* e tratamento de *debounce* na aplicação.
+
+**MH-RD (módulo *raindrops*).** Sensor de chuva composto por uma placa coletora (trilhas condutivas) e uma placa de controle com comparador. A presença de água reduz a resistência entre as trilhas. Usaremos a **saída analógica (AO)** para estimar a intensidade da chuva (quanto mais molhada a placa, maior o sinal) e a **saída digital (DO)** como detecção de limiar (chovendo / não chovendo).
+
+**Módulo LED RGB SMD (indicador).** LED de três cores controlado por três GPIO da ESP32 (com PWM para compor cores). Fica no **nó externo (estação)** e serve como indicador visual de status, substituindo qualquer display local. Codifica dois conjuntos de estados: (i) o **enlace LoRa** — pacote transmitido com sucesso, aguardando, ou falha de transmissão; e (ii) o **estado do sistema** — inicialização/boot, operação normal e erro de leitura dos sensores. Cada situação é representada por uma cor/padrão de piscada, dando diagnóstico imediato em campo sem necessidade de tela.
 
 ### Limitações e desafios esperados
 
