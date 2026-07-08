@@ -87,7 +87,7 @@ flowchart TD
         BMP["BMP280<br/>temp · pressão · altitude (I²C)"] --> E1["ESP32 TX"]
         DHT["DHT11<br/>umidade · temp (digital)"] --> E1
         RAIN["MH-RD<br/>chuva (AO/DO)"] --> E1
-        LDR["LDR + comparador<br/>luminosidade (AO)"] --> E1
+        LDR["LDR (KY-018)<br/>luminosidade (analógico)"] --> E1
         REED["Reed-switch + ímã<br/>vento (pulsos)"] --> E1
         E1 --> LED["LED RGB<br/>status LoRa + sistema"]
         E1 --> L1["Módulo LoRa"]
@@ -111,7 +111,7 @@ flowchart TD
 | Temperatura + pressão + altitude | BMP280 | I²C | Núcleo da estação; altitude derivada da pressão |
 | Umidade + temperatura | DHT11 | Digital (1 fio) | Cobre umidade; redundância em temperatura |
 | Chuva | MH-RD (módulo *raindrops*) | Analógico (AO) + digital (DO) | Detecção e intensidade de chuva |
-| Luminosidade | LDR + módulo comparador | Analógico (AO) | Proxy de radiação solar; LDR em PCB separada, ligada por barramento ao módulo |
+| Luminosidade | LDR (breakout KY-018) | Analógico (ADC) | Proxy de radiação solar; leitura direta no ADC, sem módulo comparador |
 | Velocidade do vento | Reed-switch + ímã | Digital (contagem de pulsos) | Reproduz o princípio do anemômetro original |
 | Indicação de status | Módulo LED RGB SMD (3 cores) | 3 GPIO (PWM) | No nó externo; sinaliza enlace LoRa e estado do sistema |
 
@@ -121,13 +121,24 @@ flowchart TD
 
 **DHT11.** Sensor digital de umidade relativa e temperatura, com protocolo proprietário de um fio (single-wire). Fornece a umidade do ar — grandeza que o BMP280 não cobre — e uma leitura secundária de temperatura, útil como redundância. É um sensor econômico, com resolução e taxa de amostragem modestas (≈1 leitura/s e precisão da ordem de ±2 °C / ±5 % UR), coerente com o caráter de reprodução didática do projeto.
 
-**LDR + módulo comparador (leitura analógica).** O LDR (resistor dependente de luz) tem resistência que cai conforme a luminosidade aumenta. No nosso hardware o LDR fica em uma PCB separada, conectada por um barramento ao módulo comparador; a ESP32 lê a **saída analógica (AO)** pelo ADC, obtendo um valor proporcional à luz incidente. Essa leitura proporcional funciona como *proxy* de radiação solar (o produto original usa um piranômetro). A saída digital do comparador (limiar claro/escuro) não é usada, pois interessa a intensidade e não apenas o estado liga/desliga.
+**LDR (breakout KY-018, leitura analógica).** O LDR (resistor dependente de luz) tem resistência que cai conforme a luminosidade aumenta. O breakout KY-018 já traz o LDR em série com um resistor fixo (10 kΩ), formando um divisor de tensão cuja saída é proporcional à luz incidente. Assim, o pino de sinal vai **direto ao ADC da ESP32**, dispensando o módulo comparador. Essa leitura proporcional funciona como *proxy* de radiação solar (o produto original usa um piranômetro).
 
 **Reed-switch + ímã.** Chave magnética que fecha o contato quando o ímã passa próximo. Montada no eixo do anemômetro, gera um pulso por rotação; a ESP32 conta os pulsos por unidade de tempo para inferir a velocidade do vento. É exatamente o princípio do sensor magnético de estado sólido da Vantage Pro2. Requer resistor de *pull-up* e tratamento de *debounce* na aplicação.
 
 **MH-RD (módulo *raindrops*).** Sensor de chuva composto por uma placa coletora (trilhas condutivas) e uma placa de controle com comparador. A presença de água reduz a resistência entre as trilhas. Usaremos a **saída analógica (AO)** para estimar a intensidade da chuva (quanto mais molhada a placa, maior o sinal) e a **saída digital (DO)** como detecção de limiar (chovendo / não chovendo).
 
 **Módulo LED RGB SMD (indicador).** LED de três cores controlado por três GPIO da ESP32 (com PWM para compor cores). Fica no **nó externo (estação)** e serve como indicador visual de status, substituindo qualquer display local. Codifica dois conjuntos de estados: (i) o **enlace LoRa** — pacote transmitido com sucesso, aguardando, ou falha de transmissão; e (ii) o **estado do sistema** — inicialização/boot, operação normal e erro de leitura dos sensores. Cada situação é representada por uma cor/padrão de piscada, dando diagnóstico imediato em campo sem necessidade de tela.
+
+### Leitura analógica vs. digital nos sensores de luz e chuva
+
+Os módulos de luz e de chuva podem ser lidos de duas formas, e a escolha define quanta informação chega à ESP32. A **saída digital (DO)** entrega apenas 1 bit — o sinal comparado a um limiar fixo por um trimpot no próprio hardware ("claro/escuro", "chovendo/não chovendo"). A **saída analógica (AO/ADC)** entrega um valor contínuo e proporcional (0–4095 no ADC de 12 bits da ESP32), ou seja, a *intensidade* da grandeza.
+
+Para uma estação meteorológica, a intensidade é justamente o dado de interesse: a luminosidade só serve como *proxy* de radiação solar se pudermos traçar sua curva ao longo do dia (amanhecer, pico, nuvens, entardecer), e a chuva é mais útil como intensidade do que como um mero "está chovendo". Por isso adotamos a **leitura analógica** para ambos. As vantagens e o custo dessa escolha:
+
+- **Ganhos:** valor proporcional que permite plotar curvas, extrair máx/mín, integrar no tempo e calibrar; além disso, qualquer decisão de limiar pode ser feita em software (inclusive vários limiares), sem depender de ajuste físico.
+- **Custo:** ocupa um pino de ADC e o conversor da ESP32 tem ruído e não-linearidade nas extremidades, exigindo tratamento/calibração do valor bruto.
+
+O ponto decisivo é que **o digital é apenas o analógico com um limiar aplicado**: tendo o valor analógico, reproduzimos por software qualquer decisão binária; o contrário não é possível — a partir do bit digital não se recupera a intensidade. A leitura analógica é, portanto, estritamente mais informativa.
 
 ### Limitações e desafios esperados
 
