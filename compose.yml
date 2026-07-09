@@ -1,0 +1,31 @@
+# Toolchain do ESP-IDF como TAREFA efêmera (docker compose run --rm),
+# não como serviço de longa duração — cada comando cria um container
+# novo e o destrói ao final; nenhum estado sobrevive entre builds.
+# As variáveis ${...} são exportadas pelo Makefile — usar sempre `make`.
+
+# Âncora YAML: configuração comum aos dois services.
+x-toolchain-base: &toolchain-base
+  image: espressif/idf:${IDF_VERSION:-release-v5.3}
+  # Sem isto o container roda como root e build/, sdkconfig etc.
+  # sairiam com dono root no host.
+  user: "${HOST_UID:?use o Makefile (make build, make flash...)}:${HOST_GID:?use o Makefile}"
+  # O UID do host não existe no /etc/passwd do container; HOME gravável
+  # para os caches do IDF.
+  environment:
+    HOME: /tmp
+  # Repo montado NO MESMO caminho do host para que os caminhos absolutos
+  # do build/compile_commands.json valham para o clangd fora do container.
+  volumes:
+    - ${REPO_ROOT:?use o Makefile}:${REPO_ROOT:?use o Makefile}
+  working_dir: ${WORK_DIR:?use o Makefile}
+
+services:
+  # Build, menuconfig, shell — nunca depende da placa conectada.
+  toolchain:
+    <<: *toolchain-base
+
+  # Flash, monitor — anexa a porta serial ao container.
+  dev:
+    <<: *toolchain-base
+    devices:
+      - ${PORT:-/dev/ttyUSB0}:${PORT:-/dev/ttyUSB0}

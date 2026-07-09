@@ -1,39 +1,34 @@
 # ===== Estação Meteorológica — comandos do projeto =====
 # `make` ou `make help` lista os alvos disponíveis.
+# A configuração dos containers está declarada em compose.yml;
+# overrides por máquina vão em .env (ver .env.example).
 
-PROJ   ?= firmware/estacao
-PORT   ?= /dev/ttyUSB0
-IMAGE  ?= espressif/idf:release-v5.3
-TARGET ?= esp32
+-include .env
 
-.DEFAULT_GOAL := help
+PROJ        ?= firmware/estacao
+PORT        ?= /dev/ttyUSB0
+IDF_VERSION ?= release-v5.3
+TARGET      ?= esp32
 
-# -t (TTY) só quando há um terminal de verdade — em CI ou execução
-# não interativa o docker falharia com "the input device is not a TTY".
-TTY = $(shell test -t 0 && echo -it || echo -i)
+# Variáveis que o compose.yml interpola (${...}).
+export PORT IDF_VERSION
+export REPO_ROOT := $(CURDIR)
+export WORK_DIR  := $(CURDIR)/$(PROJ)
+export HOST_UID  := $(shell id -u)
+export HOST_GID  := $(shell id -g)
 
-# --user com o UID/GID do host: sem isso o container roda como root e
-# todo arquivo gerado no volume (build/, sdkconfig) sai com dono root.
-ASUSER = --user $(shell id -u):$(shell id -g)
+# Sem terminal (CI, execução por script) o run precisa de -T para não
+# tentar alocar um pseudo-TTY.
+TTYFLAG = $(shell test -t 0 || echo -T)
 
-# O repositório é montado NO MESMO caminho do host para que os caminhos
-# do compile_commands.json gerado no container sejam válidos no host.
-RUN = docker run --rm $(TTY) $(ASUSER) \
-	-v "$(CURDIR)":"$(CURDIR)" \
-	-w "$(CURDIR)/$(PROJ)" \
-	-e HOME=/tmp \
-	$(IMAGE)
+COMPOSE = docker compose
+# Tarefas efêmeras: cada comando cria um container e o destrói no final.
+RUN     = $(COMPOSE) run --rm $(TTYFLAG) toolchain
+# Variante com a porta serial — apenas flash/monitor/erase precisam da
+# placa conectada; o build nunca deve depender dela.
+RUN_DEV = $(COMPOSE) run --rm $(TTYFLAG) dev
 
-# Variante com acesso à porta serial — apenas flash/monitor precisam
-# da placa conectada; o build nunca deve depender dela.
-RUN_DEV = docker run --rm $(TTY) $(ASUSER) \
-	-v "$(CURDIR)":"$(CURDIR)" \
-	-w "$(CURDIR)/$(PROJ)" \
-	--device=$(PORT) \
-	-e HOME=/tmp \
-	$(IMAGE)
-
-.PHONY: help set-target build flash monitor run menuconfig clean shell lsp-setup
+.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup
 
 help:
 	@printf 'Targets disponíveis:\n'
@@ -41,17 +36,21 @@ help:
 	@printf '  make set-target     Define o chip alvo do ESP-IDF usando TARGET=%s\n' '$(TARGET)'
 	@printf '  make build          Compila o firmware (não exige a placa)\n'
 	@printf '  make flash          Grava o firmware usando PORT=%s\n' '$(PORT)'
+	@printf '  make erase-flash    Apaga a flash da placa por completo\n'
 	@printf '  make monitor        Abre o monitor serial (sair: Ctrl+])\n'
 	@printf '  make run            flash + monitor em sequência\n'
 	@printf '  make menuconfig     Menu de configuração do projeto\n'
 	@printf '  make clean          Limpa o build por completo (fullclean)\n'
 	@printf '  make shell          Abre um bash dentro do container\n'
 	@printf '  make lsp-setup      Extrai IDF/toolchain para /opt/esp (1x, ~3 GB, p/ clangd)\n'
-	@printf '\nVariáveis (sobrescrever na chamada, ex.: make build PROJ=firmware/gateway):\n'
+	@printf '\nVariáveis (sobrescrever na chamada ou no .env):\n'
 	@printf '  PROJ=%s\n' '$(PROJ)'
 	@printf '  PORT=%s\n' '$(PORT)'
-	@printf '  IMAGE=%s\n' '$(IMAGE)'
+	@printf '  IDF_VERSION=%s\n' '$(IDF_VERSION)'
 	@printf '  TARGET=%s\n' '$(TARGET)'
+	@printf '\nExemplos:\n'
+	@printf '  make build PROJ=firmware/gateway\n'
+	@printf '  make flash PORT=/dev/ttyUSB1\n'
 
 set-target:
 	$(RUN) idf.py set-target $(TARGET)
@@ -61,6 +60,9 @@ build:
 
 flash:
 	$(RUN_DEV) idf.py -p $(PORT) flash
+
+erase-flash:
+	$(RUN_DEV) idf.py -p $(PORT) erase-flash
 
 monitor:
 	$(RUN_DEV) idf.py -p $(PORT) monitor
@@ -78,7 +80,7 @@ shell:
 	$(RUN) bash
 
 lsp-setup:
-	docker create --name idf-extract $(IMAGE)
+	docker create --name idf-extract espressif/idf:$(IDF_VERSION)
 	sudo mkdir -p /opt/esp
 	sudo docker cp idf-extract:/opt/esp/idf /opt/esp/
 	sudo docker cp idf-extract:/opt/esp/tools /opt/esp/

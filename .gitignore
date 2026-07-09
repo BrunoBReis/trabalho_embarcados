@@ -1,6 +1,9 @@
 # Anotações pessoais de trabalho
 prompt.md
 
+# Configuração por máquina (documentada em .env.example)
+.env
+
 # Artefatos de build do ESP-IDF (regenerados por `make build`)
 firmware/*/build/
 

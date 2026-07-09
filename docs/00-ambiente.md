@@ -31,17 +31,41 @@ Ciclo **build → flash → monitor** 100% dockerizado, com o projeto
   `bootloader.bin` (0x1000), `partition-table.bin` (0x8000),
   `estacao.bin` (0x10000). O hello world tem ~159 KB numa partição de 1 MB.
 
+## Decisão: compose run --rm (tarefa efêmera declarada em YAML)
+
+Depois do primeiro build funcionando com `docker run` puro, a gestão do
+toolchain migrou para **`docker compose run --rm`** (`compose.yml` na raiz):
+
+- **Por que não `compose up` + `exec`** (padrão devcontainer): compose
+  orquestra *serviços* (processos duradouros, portas, rede entre eles);
+  o compilador é uma *tarefa* — roda e termina. Container de longa duração
+  reintroduz estado (drift), falha no `up` sem a placa plugada e exige
+  `down`/`up` a cada replug da ESP32 (Docker não faz hot-plug de device).
+- **Por que não ficar no `docker run` puro**: a configuração (volumes,
+  device, user) ficava implícita em flags dentro do Makefile. O
+  `compose.yml` declara isso de forma legível e versionada.
+- **`compose run --rm`** dá os dois: declaração em YAML + container
+  efêmero por comando. Dois services: `toolchain` (sem device — build)
+  e `dev` (com a serial — flash/monitor), unidos por âncora YAML.
+- `.env` (fora do git; ver `.env.example`) permite override por máquina
+  (`PORT`, `IDF_VERSION`) sem tocar em arquivo versionado.
+- A infra de *serviços de verdade* (Mosquitto, InfluxDB, Grafana) terá o
+  próprio compose em `infra/` nas Fases 5–6 — lá com `up -d`, restart
+  policy e volumes, que é onde esse modo brilha.
+
 ## Ajustes feitos no Makefile durante a fase
 
-- **`-it` → detecção automática de TTY** (`test -t 0`): com `-t` fixo, o
-  `docker run` falha quando não há terminal (CI, execuções por script) com
-  `the input device is not a TTY`. Interativo continua tendo TTY (necessário
-  para o Ctrl+] do monitor).
-- **`--user $(id -u):$(id -g)`**: sem isso o container roda como root e todo
-  arquivo escrito no volume (`build/`, `sdkconfig`) sai com dono root no
-  host — impossível de editar/apagar sem sudo. Com o flag, tudo sai com o
-  UID/GID do usuário. O `HOME=/tmp` complementa: o UID 1000 não existe no
-  `/etc/passwd` do container, então damos um home gravável para caches.
+- **Detecção automática de TTY** (`test -t 0`): sem terminal (CI, execução
+  por script) o `compose run` precisa de `-T` para não tentar alocar um
+  pseudo-TTY. Interativo continua tendo TTY (necessário para o Ctrl+] do
+  monitor e para o menuconfig).
+- **`user:` com UID/GID do host** (no compose.yml): sem isso o container
+  roda como root e todo arquivo escrito no volume (`build/`, `sdkconfig`)
+  sai com dono root no host — impossível de editar/apagar sem sudo. O
+  `HOME=/tmp` complementa: o UID 1000 não existe no `/etc/passwd` do
+  container, então damos um home gravável para caches.
+- **Alvo `erase-flash`**: apaga a flash inteira quando ela fica num estado
+  estranho (NVS corrompida etc.).
 
 ## Problemas encontrados
 
