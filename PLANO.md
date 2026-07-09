@@ -11,7 +11,7 @@ documentar em `docs/`, commitar e marcar a caixa.
 
 **Objetivo:** ciclo build → flash → monitor funcionando via Docker.
 
-- [ ] Adicionar usuário ao grupo `uucp` e validar acesso a `/dev/ttyACM0`
+- [x] Adicionar usuário ao grupo `uucp` e validar acesso a `/dev/ttyACM0`
       (placa conectada, `dmesg` mostrando o CP2102/CH340)
 - [x] Colocar o `Makefile` e o `.clangd` na raiz do repositório; validar
       que `make` (help) e `make shell` funcionam com a imagem
@@ -20,10 +20,10 @@ documentar em `docs/`, commitar e marcar a caixa.
       `idf.py create-project`) e rodar `make set-target`
 - [x] Hello world em `app_main()`: log a cada 1 s com contador, usando
       `ESP_LOGI` + `vTaskDelay`; compilar com `make build`
-- [ ] `make lsp-setup` (uma vez, ~3 GB) e clangd funcionando no LazyVim
+- [x] `make lsp-setup` (uma vez, ~3 GB) e clangd funcionando no LazyVim
       (autocomplete e go-to-definition das APIs do IDF; o
       `compile_commands.json` é encontrado automaticamente no `build/`)
-- [ ] Repositório git iniciado; primeiro commit; `docs/00-ambiente.md`
+- [x] Repositório git iniciado; primeiro commit; `docs/00-ambiente.md`
 
 **Aceitação:** vejo o contador subindo no `make run`, e o
 LazyVim navega para definições do ESP-IDF.
