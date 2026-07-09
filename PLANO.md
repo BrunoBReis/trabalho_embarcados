@@ -11,7 +11,7 @@ documentar em `docs/`, commitar e marcar a caixa.
 
 **Objetivo:** ciclo build → flash → monitor funcionando via Docker.
 
-- [ ] Adicionar usuário ao grupo `uucp` e validar acesso a `/dev/ttyUSB0`
+- [ ] Adicionar usuário ao grupo `uucp` e validar acesso a `/dev/ttyACM0`
       (placa conectada, `dmesg` mostrando o CP2102/CH340)
 - [x] Colocar o `Makefile` e o `.clangd` na raiz do repositório; validar
       que `make` (help) e `make shell` funcionam com a imagem

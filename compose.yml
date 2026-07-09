@@ -28,4 +28,4 @@ services:
   dev:
     <<: *toolchain-base
     devices:
-      - ${PORT:-/dev/ttyUSB0}:${PORT:-/dev/ttyUSB0}
+      - ${PORT:-/dev/ttyACM0}:${PORT:-/dev/ttyACM0}

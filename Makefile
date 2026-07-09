@@ -6,7 +6,7 @@
 -include .env
 
 PROJ        ?= firmware/estacao
-PORT        ?= /dev/ttyUSB0
+PORT        ?= /dev/ttyACM0
 IDF_VERSION ?= release-v5.3
 TARGET      ?= esp32
 

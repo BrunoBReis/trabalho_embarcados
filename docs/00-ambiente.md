@@ -89,7 +89,7 @@ docker run --rm -v "$PWD":"$PWD" -w "$PWD/firmware" \
 
 make set-target        # define esp32 como alvo (gera sdkconfig e build/)
 make build             # compila; termina com "Project build complete"
-make run               # flash + monitor (requer a placa em /dev/ttyUSB0)
+make run               # flash + monitor (requer a placa em /dev/ttyACM0)
 make lsp-setup         # uma vez, ~3 GB em /opt/esp, para o clangd no host
 ```
 
@@ -103,13 +103,13 @@ sudo usermod -aG uucp $USER   # exige logout/login para valer
 
 Observação: como o flash roda via Docker, ele funcionaria mesmo sem isso
 (o daemon do Docker tem acesso ao device), mas o grupo é o correto para
-acessar `/dev/ttyUSB0` diretamente do host (ex.: picocom).
+acessar `/dev/ttyACM0` diretamente do host (ex.: picocom).
 
 ## Como validar
 
 1. `make build` → termina com `Project build complete`.
 2. Placa conectada: `dmesg | tail` mostra o conversor USB-serial
-   (CP2102/CH340) e `ls -l /dev/ttyUSB0` mostra grupo `uucp`.
+   (CP2102/CH340) e `ls -l /dev/ttyACM0` mostra grupo `uucp`.
 3. `make run` → monitor mostra `I (…) estacao: contador: N` subindo a cada
    1 s (sair com Ctrl+]).
 4. LazyVim: abrir `firmware/estacao/main/estacao.c` (após um build),

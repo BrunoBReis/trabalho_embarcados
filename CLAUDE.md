@@ -18,7 +18,7 @@ referência da arquitetura é o `README.md` do repositório.
 - Editor: LazyVim (Neovim) + clangd. Não sugerir fluxos dependentes de
   VS Code ou de IDEs gráficas.
 - SO: Arch Linux (Omarchy). Grupo da serial é `uucp`. Porta típica:
-  `/dev/ttyUSB0`.
+  `/dev/ttyACM0`.
 
 ## Hardware
 
