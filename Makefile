@@ -15,6 +15,9 @@ export PORT IDF_VERSION
 export REPO_ROOT := $(CURDIR)
 export WORK_DIR  := $(CURDIR)/$(PROJ)
 export HOST_UID  := $(shell id -u)
+# GID do grupo dono da porta serial (uucp no Arch, dialout em Debian):
+# o container precisa dele como grupo suplementar para abrir o device.
+export PORT_GID  := $(shell stat -c '%g' $(PORT) 2>/dev/null || echo 0)
 export HOST_GID  := $(shell id -g)
 
 # Sem terminal (CI, execução por script) o run precisa de -T para não

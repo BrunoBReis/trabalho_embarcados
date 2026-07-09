@@ -29,3 +29,7 @@ services:
     <<: *toolchain-base
     devices:
       - ${PORT:-/dev/ttyACM0}:${PORT:-/dev/ttyACM0}
+    # user: não carrega grupos suplementares para dentro do container;
+    # sem o GID do grupo da serial (uucp/dialout) o device fica ilegível.
+    group_add:
+      - "${PORT_GID:-0}"
