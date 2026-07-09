@@ -1,0 +1,11 @@
+# Configuração do clangd para o projeto (fica na raiz do repositório).
+# O firmware é compilado pelo GCC Xtensa (cross-compiler), que aceita
+# flags que o clangd (baseado em clang) não conhece. Sem removê-las,
+# o clangd marca erro falso em todos os arquivos.
+CompileFlags:
+  Remove:
+    - -mlongcalls
+    - -fno-tree-switch-conversion
+    - -fstrict-volatile-bitfields
+    - -mdisable-hardware-atomics
+    - -fno-shrink-wrap

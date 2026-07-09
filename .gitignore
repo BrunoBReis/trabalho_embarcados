@@ -1,0 +1,12 @@
+# Anotações pessoais de trabalho
+prompt.md
+
+# Artefatos de build do ESP-IDF (regenerados por `make build`)
+firmware/*/build/
+
+# Backups antigos gerados pelo menuconfig
+firmware/*/sdkconfig.old
+
+# Componentes baixados pelo gerenciador do IDF (regenerados no build)
+firmware/*/managed_components/
+firmware/*/dependencies.lock
