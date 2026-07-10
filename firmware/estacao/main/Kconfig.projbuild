@@ -1,12 +1,15 @@
 menu "Estacao - teste de bancada"
 
     choice ESTACAO_TESTE
-        prompt "Qual teste rodar no boot"
-        default ESTACAO_TESTE_TODOS
+        prompt "Modo de operacao no boot"
+        default ESTACAO_MODO_ESTACAO
         help
-            Seleciona o codigo que o app_main executa. Cada sensor tem
-            um teste isolado; "todos" roda o autoteste de bancada e o
-            loop de leitura continua de todos os sensores ja integrados.
+            Seleciona o codigo que o app_main executa: o firmware da
+            estacao (pacote periodico), o modo bancada (leitura continua
+            de tudo) ou o teste isolado de um sensor.
+
+        config ESTACAO_MODO_ESTACAO
+            bool "estacao (pacote periodico — producao)"
 
         config ESTACAO_TESTE_TODOS
             bool "todos (modo bancada)"
@@ -27,5 +30,14 @@ menu "Estacao - teste de bancada"
             bool "LED RGB - status (GPIOs 16/17/13, LEDC)"
 
     endchoice
+
+    config ESTACAO_INTERVALO_S
+        int "Intervalo entre pacotes no modo estacao (segundos)"
+        depends on ESTACAO_MODO_ESTACAO
+        range 5 3600
+        default 30
+        help
+            Periodo da tarefa principal: leitura de todos os sensores e
+            montagem do pacote. Na Fase 4, baixar p/ testes de perda.
 
 endmenu

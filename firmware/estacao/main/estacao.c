@@ -26,7 +26,8 @@ static i2c_master_bus_handle_t iniciar_barramento_i2c(void) {
   return bus;
 }
 
-#if CONFIG_ESTACAO_TESTE_TODOS
+// Bloco compartilhado entre o modo estacao e o modo bancada.
+#if CONFIG_ESTACAO_TESTE_TODOS || CONFIG_ESTACAO_MODO_ESTACAO
 
 #include "led_status.h"
 #include "pacote.h"
@@ -77,6 +78,10 @@ static int autoteste(i2c_master_bus_handle_t bus) {
   return falhas;
 }
 
+#endif // bloco compartilhado
+
+#if CONFIG_ESTACAO_TESTE_TODOS
+
 void app_main(void) {
   i2c_master_bus_handle_t bus = iniciar_barramento_i2c();
   int falhas_boot = autoteste(bus);
@@ -114,6 +119,81 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_TODOS
+
+#if CONFIG_ESTACAO_MODO_ESTACAO
+
+// Firmware da estacao: a cada intervalo, le todos os sensores, monta o
+// pacote binario (formato de common/pacote) e o imprime legivel + hex.
+// Falha de sensor vira bit em flags e campo zerado — o loop nunca para.
+void app_main(void) {
+  i2c_master_bus_handle_t bus = iniciar_barramento_i2c();
+  int falhas_boot = autoteste(bus);
+  if (falhas_boot > 0) {
+    ESP_LOGW(TAG, "iniciando com %d componente(s) em falha", falhas_boot);
+  }
+
+  static pacote_t pacote = {0};
+
+  while (true) {
+    vTaskDelay(pdMS_TO_TICKS(CONFIG_ESTACAO_INTERVALO_S * 1000));
+
+    pacote.seq++;
+    pacote.flags = 0;
+
+    float t_bmp = 0, p_hpa = 0;
+    if (sensor_bmp280_ler(&t_bmp, &p_hpa) == ESP_OK) {
+      pacote.temp_x100 = (int16_t)(t_bmp * 100.0f);   // ponto fixo
+      pacote.press_pa = (uint32_t)(p_hpa * 100.0f);   // hPa -> Pa
+    } else {
+      pacote.temp_x100 = 0;
+      pacote.press_pa = 0;
+      pacote.flags |= PACOTE_FLAG_ERRO_BMP280;
+    }
+
+    int luz = 0;
+    if (sensor_ldr_ler(&luz) == ESP_OK) {
+      pacote.luz_raw = (uint16_t)luz;
+    } else {
+      pacote.luz_raw = 0;
+      pacote.flags |= PACOTE_FLAG_ERRO_LDR;
+    }
+
+    int chuva_ao = 0;
+    bool molhado = false;
+    if (sensor_chuva_ler(&chuva_ao, &molhado) == ESP_OK) {
+      pacote.chuva_raw = (uint16_t)chuva_ao;
+    } else {
+      pacote.chuva_raw = 0;
+      pacote.flags |= PACOTE_FLAG_ERRO_CHUVA;
+    }
+
+    float umid = 0, t_dht = 0;
+    if (sensor_dht11_ler(&umid, &t_dht) == ESP_OK) {
+      pacote.umid = (uint8_t)umid;
+    } else {
+      pacote.umid = 0;
+      pacote.flags |= PACOTE_FLAG_ERRO_DHT11;
+    }
+
+    uint32_t pulsos = sensor_vento_coletar_pulsos();
+    pacote.vento_ppm = (uint16_t)(pulsos * 60 / CONFIG_ESTACAO_INTERVALO_S);
+
+    pacote_finalizar(&pacote);
+
+    ESP_LOGI(TAG,
+             "pacote seq=%u: T=%.2fC P=%luPa umid=%u%% luz=%u chuva=%u "
+             "vento=%u ppm flags=0x%02X crc=0x%04X",
+             pacote.seq, pacote.temp_x100 / 100.0f,
+             (unsigned long)pacote.press_pa, pacote.umid, pacote.luz_raw,
+             pacote.chuva_raw, pacote.vento_ppm, pacote.flags, pacote.crc16);
+    ESP_LOG_BUFFER_HEX(TAG, &pacote, sizeof(pacote));
+
+    led_status_definir(pacote.flags == 0 ? LED_STATUS_OK
+                                         : LED_STATUS_ERRO_SENSOR);
+  }
+}
+
+#endif // CONFIG_ESTACAO_MODO_ESTACAO
 
 #if CONFIG_ESTACAO_TESTE_LDR
 
