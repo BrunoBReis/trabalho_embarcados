@@ -14,6 +14,9 @@ menu "Estacao - teste de bancada"
         config ESTACAO_TESTE_LDR
             bool "LDR - luminosidade (GPIO 34, ADC)"
 
+        config ESTACAO_TESTE_CHUVA
+            bool "MH-RD - chuva (GPIO 35 AO + GPIO 27 DO)"
+
     endchoice
 
 endmenu

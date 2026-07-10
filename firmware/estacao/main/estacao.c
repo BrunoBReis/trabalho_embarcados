@@ -80,3 +80,27 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_LDR
+
+#if CONFIG_ESTACAO_TESTE_CHUVA
+
+#include "sensor_chuva.h"
+
+// Teste isolado do MH-RD: AO e DO lado a lado a cada 1 s. Molhar o
+// pente faz o AO cair; o DO vira quando cruza o limiar do trimpot.
+void app_main(void) {
+  ESP_ERROR_CHECK(sensor_chuva_init());
+  while (true) {
+    int ao = 0;
+    bool molhado = false;
+    esp_err_t err = sensor_chuva_ler(&ao, &molhado);
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "falha ao ler MH-RD: %s", esp_err_to_name(err));
+    } else {
+      ESP_LOGI(TAG, "chuva AO (bruto 0-4095): %d | DO: %s", ao,
+               molhado ? "MOLHADO" : "seco");
+    }
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_CHUVA

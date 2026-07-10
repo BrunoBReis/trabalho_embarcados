@@ -394,6 +394,7 @@ CONFIG_PARTITION_TABLE_MD5=y
 #
 CONFIG_ESTACAO_TESTE_TODOS=y
 # CONFIG_ESTACAO_TESTE_LDR is not set
+# CONFIG_ESTACAO_TESTE_CHUVA is not set
 # end of Estacao - teste de bancada
 
 #
