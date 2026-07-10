@@ -127,3 +127,22 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_DHT11
+
+#if CONFIG_ESTACAO_TESTE_VENTO
+
+#include "sensor_vento.h"
+
+// Teste isolado do reed-switch: janela de 5 s; passar o ima conta
+// pulsos (com debounce de 10 ms na ISR).
+void app_main(void) {
+  ESP_ERROR_CHECK(sensor_vento_init());
+  while (true) {
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    uint32_t pulsos = sensor_vento_coletar_pulsos();
+    // pulsos em 5 s -> equivalente por minuto (x12)
+    ESP_LOGI(TAG, "vento: %lu pulsos na janela de 5 s (%lu/min)",
+             (unsigned long)pulsos, (unsigned long)(pulsos * 12));
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_VENTO

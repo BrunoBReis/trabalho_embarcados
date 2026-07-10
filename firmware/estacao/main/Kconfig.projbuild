@@ -20,6 +20,9 @@ menu "Estacao - teste de bancada"
         config ESTACAO_TESTE_DHT11
             bool "DHT11 - umidade/temperatura (GPIO 4)"
 
+        config ESTACAO_TESTE_VENTO
+            bool "Reed-switch - vento (GPIO 25, interrupcao)"
+
     endchoice
 
 endmenu
