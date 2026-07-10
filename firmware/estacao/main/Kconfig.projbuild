@@ -17,6 +17,9 @@ menu "Estacao - teste de bancada"
         config ESTACAO_TESTE_CHUVA
             bool "MH-RD - chuva (GPIO 35 AO + GPIO 27 DO)"
 
+        config ESTACAO_TESTE_DHT11
+            bool "DHT11 - umidade/temperatura (GPIO 4)"
+
     endchoice
 
 endmenu

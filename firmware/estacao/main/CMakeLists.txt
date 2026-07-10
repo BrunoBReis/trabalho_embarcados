@@ -3,4 +3,5 @@ idf_component_register(SRCS "estacao.c"
                             "sensor_bmp280.c"
                             "sensor_ldr.c"
                             "sensor_chuva.c"
+                            "sensor_dht11.c"
                        INCLUDE_DIRS ".")

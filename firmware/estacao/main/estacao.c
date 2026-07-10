@@ -104,3 +104,26 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_CHUVA
+
+#if CONFIG_ESTACAO_TESTE_DHT11
+
+#include "sensor_dht11.h"
+
+// Teste isolado do DHT11: leitura a cada 2 s (o sensor exige >= 1 s
+// entre leituras). Falha ocasional de checksum e normal do protocolo.
+void app_main(void) {
+  ESP_ERROR_CHECK(sensor_dht11_init());
+  while (true) {
+    float umidade = 0, temperatura = 0;
+    esp_err_t err = sensor_dht11_ler(&umidade, &temperatura);
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "falha ao ler DHT11: %s", esp_err_to_name(err));
+    } else {
+      ESP_LOGI(TAG, "umidade: %.0f %% | temperatura: %.1f C", umidade,
+               temperatura);
+    }
+    vTaskDelay(pdMS_TO_TICKS(2000));
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_DHT11
