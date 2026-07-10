@@ -58,3 +58,25 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_TODOS
+
+#if CONFIG_ESTACAO_TESTE_LDR
+
+#include "sensor_ldr.h"
+
+// Teste isolado do LDR: valor bruto a cada 1 s; cobrir/iluminar o
+// sensor deve mover o numero de forma clara.
+void app_main(void) {
+  ESP_ERROR_CHECK(sensor_ldr_init());
+  while (true) {
+    int bruto = 0;
+    esp_err_t err = sensor_ldr_ler(&bruto);
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "falha ao ler LDR: %s", esp_err_to_name(err));
+    } else {
+      ESP_LOGI(TAG, "luz (bruto 0-4095): %d", bruto);
+    }
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_LDR

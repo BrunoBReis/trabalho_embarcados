@@ -11,6 +11,9 @@ menu "Estacao - teste de bancada"
         config ESTACAO_TESTE_TODOS
             bool "todos (modo bancada)"
 
+        config ESTACAO_TESTE_LDR
+            bool "LDR - luminosidade (GPIO 34, ADC)"
+
     endchoice
 
 endmenu

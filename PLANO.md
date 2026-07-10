@@ -39,22 +39,24 @@ Makefile (alvos, variáveis sobrescrevíveis, `.PHONY`, alvo padrão).
 
 **Objetivo:** entender I²C lendo temperatura e pressão reais.
 
-- [ ] Explicação: como funciona o barramento I²C (SDA/SCL, endereços,
+- [x] Explicação: como funciona o barramento I²C (SDA/SCL, endereços,
       pull-ups) e o driver `i2c_master` do IDF v5
-- [ ] Scanner I²C: varrer o barramento e imprimir o endereço encontrado
+- [x] Scanner I²C: varrer o barramento e imprimir o endereço encontrado
       (esperado 0x76 ou 0x77) — primeiro código "de verdade"
-- [ ] Ler o registrador de ID do chip (0xD0 deve retornar 0x58) na mão,
+- [x] Ler o registrador de ID do chip (0xD0 deve retornar 0x58) na mão,
       para entender leitura de registradores
-- [ ] Integrar leitura completa (calibração + compensação) — pode usar
+- [x] Integrar leitura completa (calibração + compensação) — pode usar
       componente pronto, mas explicando o que ele faz
-- [ ] Log periódico: temperatura (°C) e pressão (hPa) a cada 5 s
-- [ ] `docs/01-bmp280.md`
+- [x] Log periódico: temperatura (°C) e pressão (hPa) a cada 5 s
+- [x] `docs/01-bmp280.md`
 
 **Aceitação:** valores plausíveis para Brasília (~26 °C, ~890 hPa pela
 altitude de ~1100 m) no monitor serial.
 
 **Aprender:** registradores, datasheet, diferença entre valor bruto e
 compensado, por que o BMP280 precisa de coeficientes de calibração.
+
+**Obs**: o sensor não está com boa qualidade, por conta disso não foi possível pegar os dados reais.
 
 ---
 
@@ -64,8 +66,12 @@ compensado, por que o BMP280 precisa de coeficientes de calibração.
 
 Ordem (cada item = um mini-projeto de teste isolado + depois integração):
 
-- [ ] **LDR no ADC** (GPIO 34): configurar ADC1 com atenuação de 12 dB,
+- [x] **LDR no ADC** (GPIO 34): configurar ADC1 com atenuação de 12 dB,
       ler 0–4095, entender ruído e média de amostras
+      **Obs (pendência de hardware)**: módulo KY-018 veio com o LDR
+      soldado em furos não conectados (ver docs/02-ldr.md); software
+      validado com jumper no 3V3 (leu 4095). Consertar módulo ou montar
+      divisor com LDR avulso + resistor ~10 kΩ quando disponível.
 - [ ] **MH-RD** (GPIO 35 AO, 27 DO): mesma base do ADC; comparar AO vs DO
       molhando a placa
 - [ ] **DHT11** (GPIO 4): protocolo single-wire com timing crítico —
