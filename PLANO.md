@@ -72,15 +72,20 @@ Ordem (cada item = um mini-projeto de teste isolado + depois integração):
       soldado em furos não conectados (ver docs/02-ldr.md); software
       validado com jumper no 3V3 (leu 4095). Consertar módulo ou montar
       divisor com LDR avulso + resistor ~10 kΩ quando disponível.
-- [ ] **MH-RD** (GPIO 35 AO, 27 DO): mesma base do ADC; comparar AO vs DO
+- [x] **MH-RD** (GPIO 35 AO, 27 DO): mesma base do ADC; comparar AO vs DO
       molhando a placa
-- [ ] **DHT11** (GPIO 4): protocolo single-wire com timing crítico —
+- [x] **DHT11** (GPIO 4): protocolo single-wire com timing crítico —
       usar componente pronto e estudar o timing no datasheet
-- [ ] **Reed-switch** (GPIO 25): interrupção GPIO, pull-up interno,
+- [x] **Reed-switch** (GPIO 25): interrupção GPIO, pull-up interno,
       debounce por tempo (ignorar pulsos < 10 ms); contar pulsos/minuto
-- [ ] **LED RGB** (16/17/13): periférico LEDC (PWM), tabela de cores de
+- [x] **LED RGB** (16/17/13): periférico LEDC (PWM), tabela de cores de
       status (boot, ok, erro de sensor, LoRa tx/falha)
-- [ ] `docs/02-...` a `docs/06-...` (um por sensor)
+      **Obs**: módulo Wcmcu é anodo comum (silkscreen "-" enganoso, comum
+      no 3V3, output_invert no LEDC) e sem resistores — teto de duty 25%.
+      Comprar 3x 220–330 Ω junto com o 10 kΩ do LDR.
+- [x] `docs/02-...` a `docs/06-...` (um por sensor)
+      **Extra**: autoteste [SELFTEST] + `tools/bancada.py` +
+      `make test-bancada` (aprovado com os 6 componentes)
 
 **Aceitação:** cada sensor tem um teste isolado que roda e imprime
 valores coerentes; consigo explicar cada linha do código.
