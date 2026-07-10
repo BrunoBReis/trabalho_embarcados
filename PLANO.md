@@ -100,16 +100,17 @@ polling, debounce, PWM/LEDC, por que protocolos com timing crítico
 
 **Objetivo:** todos os sensores juntos, dados no formato final.
 
-- [ ] Montagem completa na protoboard conferindo o mapa de pinos do
+- [x] Montagem completa na protoboard conferindo o mapa de pinos do
       CLAUDE.md
-- [ ] Definir em `common/` o pacote binário (struct packed com ponto
+- [x] Definir em `common/` o pacote binário (struct packed com ponto
       fixo: seq, temp_x100, press_pa, umid, luz_raw, chuva_raw,
-      vento_rpm, flags, crc16) — ~16 bytes
-- [ ] Tarefa principal: a cada 30 s, ler todos os sensores, preencher a
+      vento_rpm, flags, crc16) — 18 bytes (componente `common/pacote`)
+- [x] Tarefa principal: a cada 30 s, ler todos os sensores, preencher a
       struct, imprimir legível E em hex no monitor
-- [ ] Flags de erro por sensor (falha de leitura não derruba o sistema)
-- [ ] LED RGB refletindo o estado real
-- [ ] `docs/07-integracao.md` com foto da protoboard
+- [x] Flags de erro por sensor (falha de leitura não derruba o sistema)
+      — validado ao vivo: DHT11 arrancado/replugado sem reboot
+- [x] LED RGB refletindo o estado real
+- [x] `docs/07-integracao.md` (**pendência**: anexar foto da protoboard)
 
 **Aceitação:** monitor mostra o pacote completo, sensores falhos são
 marcados nas flags sem travar o loop. **Este é o marco "dados no formato
