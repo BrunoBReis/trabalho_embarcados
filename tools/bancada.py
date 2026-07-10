@@ -16,7 +16,7 @@ import time
 
 import serial
 
-ESPERADOS = ["led", "bmp280", "ldr", "chuva", "vento", "dht11"]
+ESPERADOS = ["led", "pacote", "bmp280", "ldr", "chuva", "vento", "dht11"]
 PADRAO = re.compile(r"\[SELFTEST\] (\w+) (OK|FALHA)")
 
 VERDE = "\033[32m"

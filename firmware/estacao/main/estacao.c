@@ -29,6 +29,7 @@ static i2c_master_bus_handle_t iniciar_barramento_i2c(void) {
 #if CONFIG_ESTACAO_TESTE_TODOS
 
 #include "led_status.h"
+#include "pacote.h"
 #include "sensor_chuva.h"
 #include "sensor_dht11.h"
 #include "sensor_ldr.h"
@@ -53,6 +54,9 @@ static int autoteste(i2c_master_bus_handle_t bus) {
 
   falhas += !selftest("led", led_status_init());
   led_status_definir(LED_STATUS_BOOT);
+
+  // CRC do pacote LoRa contra vetor conhecido (regressao acusa no boot).
+  falhas += !selftest("pacote", pacote_selfcheck() ? ESP_OK : ESP_FAIL);
 
   falhas += !selftest("bmp280", sensor_bmp280_init(bus));
   falhas += !selftest("ldr", sensor_ldr_init());
