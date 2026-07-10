@@ -1,0 +1,3 @@
+📖 Por que fixar a versão da imagem Docker?
+
+A tag espressif/idf:release-v5.3 congela o toolchain inteiro: compilador GCC Xtensa, CMake, esptool, e o próprio ESP-IDF. Se usássemos :latest, um docker pull daqui a 6 meses poderia trazer o IDF v6.0 — com APIs renomeadas, warnings novos virando erros, e o projeto que compilava ontem quebrando hoje sem nenhuma mudança sua. Isso é o cerne da reprodutibilidade (seu objetivo de DevOps): qualquer máquina — a sua, a do professor, o runner do CI na Fase 7 — compila com exatamente o mesmo ambiente. O bug "na minha máquina funciona" deixa de existir por construção.
