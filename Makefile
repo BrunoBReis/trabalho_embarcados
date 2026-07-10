@@ -31,7 +31,7 @@ RUN     = $(COMPOSE) run --rm $(TTYFLAG) toolchain
 # placa conectada; o build nunca deve depender dela.
 RUN_DEV = $(COMPOSE) run --rm $(TTYFLAG) dev
 
-.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup
+.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada
 
 help:
 	@printf 'Targets disponíveis:\n'
@@ -46,6 +46,7 @@ help:
 	@printf '  make clean          Limpa o build por completo (fullclean)\n'
 	@printf '  make shell          Abre um bash dentro do container\n'
 	@printf '  make lsp-setup      Extrai IDF/toolchain para /opt/esp (1x, ~3 GB, p/ clangd)\n'
+	@printf '  make test-bancada   Valida o autoteste dos sensores pela serial\n'
 	@printf '\nVariáveis (sobrescrever na chamada ou no .env):\n'
 	@printf '  PROJ=%s\n' '$(PROJ)'
 	@printf '  PORT=%s\n' '$(PORT)'
@@ -81,6 +82,10 @@ clean:
 
 shell:
 	$(RUN) bash
+
+# Requer o firmware gravado com o teste "todos (modo bancada)".
+test-bancada:
+	$(RUN_DEV) python $(CURDIR)/tools/bancada.py --porta $(PORT)
 
 lsp-setup:
 	docker create --name idf-extract espressif/idf:$(IDF_VERSION)

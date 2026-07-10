@@ -28,32 +28,84 @@ static i2c_master_bus_handle_t iniciar_barramento_i2c(void) {
 
 #if CONFIG_ESTACAO_TESTE_TODOS
 
-// Autoteste de bancada: um veredito [SELFTEST] por componente.
-// (Sera consolidado num modulo proprio no fim da Fase 2.)
-static void autoteste(i2c_master_bus_handle_t bus) {
-  esp_err_t err = sensor_bmp280_init(bus);
+#include "led_status.h"
+#include "sensor_chuva.h"
+#include "sensor_dht11.h"
+#include "sensor_ldr.h"
+#include "sensor_vento.h"
+
+// Um veredito por componente, em formato estavel para o tools/bancada.py.
+// Retorna true se OK.
+static bool selftest(const char *nome, esp_err_t err) {
   if (err == ESP_OK) {
-    ESP_LOGI(TAG, "[SELFTEST] bmp280 OK");
-  } else {
-    ESP_LOGE(TAG, "[SELFTEST] bmp280 FALHA (%s)", esp_err_to_name(err));
+    ESP_LOGI(TAG, "[SELFTEST] %s OK", nome);
+    return true;
   }
+  ESP_LOGE(TAG, "[SELFTEST] %s FALHA (%s)", nome, esp_err_to_name(err));
+  return false;
+}
+
+// Autoteste de bancada. bmp280/dht11 comprovam comunicacao real; nos
+// analogicos (ldr/chuva) e no reed o ADC/GPIO nao distingue "ausente"
+// de "escuro/seco/parado" — para esses o OK atesta inicializacao.
+static int autoteste(i2c_master_bus_handle_t bus) {
+  int falhas = 0;
+
+  falhas += !selftest("led", led_status_init());
+  led_status_definir(LED_STATUS_BOOT);
+
+  falhas += !selftest("bmp280", sensor_bmp280_init(bus));
+  falhas += !selftest("ldr", sensor_ldr_init());
+  falhas += !selftest("chuva", sensor_chuva_init());
+  falhas += !selftest("vento", sensor_vento_init());
+
+  // DHT11: a primeira leitura pos-boot falha as vezes; 3 tentativas.
+  esp_err_t err_dht = ESP_FAIL;
+  for (int i = 0; i < 3 && err_dht != ESP_OK; i++) {
+    float u = 0, t = 0;
+    vTaskDelay(pdMS_TO_TICKS(2000));
+    err_dht = sensor_dht11_ler(&u, &t);
+  }
+  falhas += !selftest("dht11", err_dht);
+
+  ESP_LOGI(TAG, "[SELFTEST] resultado: %d falha(s)", falhas);
+  led_status_definir(falhas == 0 ? LED_STATUS_OK : LED_STATUS_ERRO_SENSOR);
+  return falhas;
 }
 
 void app_main(void) {
   i2c_master_bus_handle_t bus = iniciar_barramento_i2c();
-  autoteste(bus);
+  int falhas_boot = autoteste(bus);
 
   while (true) {
-    float temperatura_c = 0, pressao_hpa = 0;
-    esp_err_t err = sensor_bmp280_ler(&temperatura_c, &pressao_hpa);
-    if (err != ESP_OK) {
-      // Falha de leitura nao derruba o sistema (principio da Fase 3).
-      ESP_LOGE(TAG, "falha ao ler BMP280: %s", esp_err_to_name(err));
-    } else {
-      ESP_LOGI(TAG, "temperatura: %.2f C | pressao: %.2f hPa", temperatura_c,
-               pressao_hpa);
-    }
     vTaskDelay(pdMS_TO_TICKS(5000));
+
+    // Falha de leitura marca erro mas nao derruba o loop (Fase 3).
+    bool erro_ciclo = false;
+
+    float t_bmp = 0, p_hpa = 0;
+    if (sensor_bmp280_ler(&t_bmp, &p_hpa) != ESP_OK) erro_ciclo = true;
+
+    int luz = -1;
+    if (sensor_ldr_ler(&luz) != ESP_OK) erro_ciclo = true;
+
+    int chuva_ao = -1;
+    bool molhado = false;
+    if (sensor_chuva_ler(&chuva_ao, &molhado) != ESP_OK) erro_ciclo = true;
+
+    float umid = 0, t_dht = 0;
+    if (sensor_dht11_ler(&umid, &t_dht) != ESP_OK) erro_ciclo = true;
+
+    uint32_t pulsos = sensor_vento_coletar_pulsos();
+
+    ESP_LOGI(TAG,
+             "T=%.2fC P=%.1fhPa | luz=%d | chuva=%d(%s) | umid=%.0f%% | "
+             "vento=%lu pulsos/5s",
+             t_bmp, p_hpa, luz, chuva_ao, molhado ? "MOLHADO" : "seco", umid,
+             (unsigned long)pulsos);
+
+    led_status_definir((erro_ciclo || falhas_boot > 0) ? LED_STATUS_ERRO_SENSOR
+                                                       : LED_STATUS_OK);
   }
 }
 
