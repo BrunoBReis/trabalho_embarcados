@@ -1,0 +1,16 @@
+menu "Estacao - teste de bancada"
+
+    choice ESTACAO_TESTE
+        prompt "Qual teste rodar no boot"
+        default ESTACAO_TESTE_TODOS
+        help
+            Seleciona o codigo que o app_main executa. Cada sensor tem
+            um teste isolado; "todos" roda o autoteste de bancada e o
+            loop de leitura continua de todos os sensores ja integrados.
+
+        config ESTACAO_TESTE_TODOS
+            bool "todos (modo bancada)"
+
+    endchoice
+
+endmenu
