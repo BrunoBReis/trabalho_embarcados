@@ -146,3 +146,32 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_VENTO
+
+#if CONFIG_ESTACAO_TESTE_LED
+
+#include "led_status.h"
+
+// Teste isolado do LED RGB: cicla as cores de status a cada 2 s e
+// depois um fade continuo no canal vermelho (ver o duty trabalhando).
+void app_main(void) {
+  ESP_ERROR_CHECK(led_status_init());
+  const led_status_t ciclo[] = {LED_STATUS_BOOT, LED_STATUS_OK,
+                                LED_STATUS_ERRO_SENSOR, LED_STATUS_FALHA,
+                                LED_STATUS_APAGADO};
+  const char *nomes[] = {"BOOT (azul)", "OK (verde)", "ERRO_SENSOR (amarelo)",
+                         "FALHA (vermelho)", "APAGADO"};
+  while (true) {
+    for (int i = 0; i < 5; i++) {
+      ESP_LOGI(TAG, "led: %s", nomes[i]);
+      led_status_definir(ciclo[i]);
+      vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+    ESP_LOGI(TAG, "led: fade do vermelho (duty 0->255->0)");
+    for (int d = 0; d <= 510; d += 5) {
+      led_status_cor(d <= 255 ? d : 510 - d, 0, 0);
+      vTaskDelay(pdMS_TO_TICKS(20));
+    }
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_LED
