@@ -195,6 +195,29 @@ void app_main(void) {
 
 #endif // CONFIG_ESTACAO_MODO_ESTACAO
 
+#if CONFIG_ESTACAO_TESTE_BMP280
+
+// Teste isolado do BMP280: temperatura e pressao a cada 2 s. Soprar no
+// sensor sobe a temperatura; a pressao deve ficar estavel (~940 hPa em
+// Brasilia, pela altitude).
+void app_main(void) {
+  i2c_master_bus_handle_t bus = iniciar_barramento_i2c();
+  ESP_ERROR_CHECK(sensor_bmp280_init(bus));
+  while (true) {
+    float temperatura = 0, pressao_hpa = 0;
+    esp_err_t err = sensor_bmp280_ler(&temperatura, &pressao_hpa);
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "falha ao ler BMP280: %s", esp_err_to_name(err));
+    } else {
+      ESP_LOGI(TAG, "temperatura: %.2f C | pressao: %.1f hPa", temperatura,
+               pressao_hpa);
+    }
+    vTaskDelay(pdMS_TO_TICKS(2000));
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_BMP280
+
 #if CONFIG_ESTACAO_TESTE_LDR
 
 #include "sensor_ldr.h"

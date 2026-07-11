@@ -14,6 +14,9 @@ menu "Estacao - teste de bancada"
         config ESTACAO_TESTE_TODOS
             bool "todos (modo bancada)"
 
+        config ESTACAO_TESTE_BMP280
+            bool "BMP280 - temperatura/pressao (I2C, GPIOs 21/22)"
+
         config ESTACAO_TESTE_LDR
             bool "LDR - luminosidade (GPIO 34, ADC)"
 

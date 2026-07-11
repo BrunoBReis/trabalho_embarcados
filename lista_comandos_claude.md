@@ -111,3 +111,4 @@ Modulo Wcmcu: anodo comum (silkscreen '-' mentiroso -> comum no 3V3,
        line = s.readline().decode(errors='replace').rstrip()
        if line and 'estacao:' in line: print(line)
    " 2>&1 | tail -4`
+- `   sed -i 's/^CONFIG_ESTACAO_TESTE_LDR=y$/# CONFIG_ESTACAO_TESTE_LDR is not set/; s/^# CONFIG_ESTACAO_TESTE_TODOS is not set$/# CONFIG_ESTACAO_TESTE_TODOS is not set\nCONFIG_ESTACAO_TESTE_BMP280=y/' firmware/estacao/sdkconfig && grep -n "ESTACAO_" firmware/estacao/sdkconfig`
