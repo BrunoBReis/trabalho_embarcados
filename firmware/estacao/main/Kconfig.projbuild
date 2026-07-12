@@ -32,6 +32,9 @@ menu "Estacao - teste de bancada"
         config ESTACAO_TESTE_LED
             bool "LED RGB - status (GPIOs 16/17/13, LEDC)"
 
+        config ESTACAO_TESTE_LORA
+            bool "LoRa Ra-02 - bring-up SPI (le RegVersion, espera 0x12)"
+
     endchoice
 
     config ESTACAO_INTERVALO_S

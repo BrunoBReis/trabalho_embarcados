@@ -6,4 +6,5 @@ idf_component_register(SRCS "estacao.c"
                             "sensor_dht11.c"
                             "sensor_vento.c"
                             "led_status.c"
+                            "lora.c"
                        INCLUDE_DIRS ".")

@@ -334,3 +334,29 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_LED
+
+#if CONFIG_ESTACAO_TESTE_LORA
+
+#include "lora.h"
+
+// Bring-up do SPI do Ra-02: le RegVersion (0x42) a cada 2 s. 0x12 =
+// fiacao ok. 0x00/0xFF = radio mudo — conferir 3V3, GND, MISO/MOSI,
+// NSS e RST. Nao transmite nada (antena ja deve estar conectada mesmo
+// assim).
+void app_main(void) {
+  ESP_ERROR_CHECK(lora_init());
+  while (true) {
+    uint8_t versao = 0;
+    esp_err_t err = lora_ler_reg(LORA_REG_VERSION, &versao);
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "falha na transacao SPI: %s", esp_err_to_name(err));
+    } else if (versao == 0x12) {
+      ESP_LOGI(TAG, "RegVersion=0x%02X — SX1278 respondendo, fiacao OK", versao);
+    } else {
+      ESP_LOGW(TAG, "RegVersion=0x%02X (esperado 0x12) — radio mudo, conferir fiacao", versao);
+    }
+    vTaskDelay(pdMS_TO_TICKS(2000));
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_LORA
