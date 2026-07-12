@@ -121,54 +121,70 @@ CRC, tolerância a falhas, por que payload binário em vez de JSON no rádio.
 
 ---
 
-## Fase 4 — Enlace LoRa (Ra-02 SX1278)
+## Fase 4 — Enlace LoRa (Ra-02 SX1278 → RTL-SDR)
 
-**Objetivo:** os dois nós conversando por rádio.
+**Objetivo:** a estação transmitindo LoRa de verdade, recebido no PC.
 
-- [ ] ⚠️ Conferir antenas conectadas nos DOIS módulos antes de qualquer TX
-- [ ] Criar o projeto do segundo nó em `firmware/gateway` (compilar/gravar
-      com `make ... PROJ=firmware/gateway PORT=/dev/ttyUSB1`)
-- [ ] Explicação: CSS/chirp, SF, BW, CR e o trade-off alcance × taxa ×
-      tempo no ar; por que 433 MHz na bancada vs AU915 num produto real
-- [ ] Integrar o componente `esp-idf-sx127x` (nopnop2002) ou driver SPI
-      próprio; entender NSS/RST/DIO0
-- [ ] Ping-pong: nó A manda "oi", nó B responde "recebi" — parâmetros
-      idênticos nos dois lados (freq 433 MHz, SF7, BW 125 kHz para começar)
-- [ ] Substituir o payload pelo pacote da Fase 3; validar CRC e seq no
-      receptor; medir RSSI/SNR
-- [ ] Teste de perda: afastar os nós, observar seq pulando
-- [ ] `docs/08-lora.md`
+**Replanejada (jul/2026):** só há UM Ra-02; os módulos FS1000A/MX-RM-5V
+são ASK/OOK e não falam LoRa. O receptor passa a ser o PC com RTL-SDR v3
++ `gr-lora_sdr` (ver `docs/08-lora.md`). O segundo ESP32 sai do caminho
+do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
 
-**Aceitação:** gateway recebe o pacote real da estação, valida CRC,
-imprime os campos decodificados + RSSI, e detecta pacotes perdidos.
+- [x] Decisão de arquitetura documentada (`docs/08-lora.md`)
+- [x] Explicação: CSS/chirp, SF, BW, CR, tempo no ar (AN1200.22)
+- [x] Driver SPI próprio (`main/lora.c`): VSPI @ 1 MHz, reset via RST,
+      leitura de registradores; **RegVersion 0x42 → 0x12 validado**
+      (pegadinha encontrada: MOSI em furo vazio da protoboard)
+- [ ] ⚠️ Antena do Ra-02: resolver adaptador SMA fêmea-fêmea (pigtail e
+      antena são ambos macho; candidato: BPF se for de 433 MHz, ou
+      adaptador do laboratório). **Nenhum código de TX antes disso.**
+- [ ] Configurar o modem: 433,0 MHz, SF12/BW125 didático, potência
+      mínima (+2 dBm na bancada); TX com TxDone via DIO0
+- [ ] Validar o chirp no waterfall (gqrx): instante, freq, largura e
+      "obediência" aos parâmetros
+- [ ] `gr-lora_sdr` (Docker) decodificando; payload = pacote da Fase 3;
+      validar CRC e seq no PC; depois voltar a SF7/BW125
+- [ ] Teste de perda: afastar estação do SDR, observar seq pulando
+- [ ] `docs/08-lora.md` completo
+
+**Aceitação:** PC recebe o pacote real da estação via SDR, valida CRC,
+imprime os campos decodificados e detecta pacotes perdidos.
 
 **Aprender:** SPI, interrupção externa (DIO0), parâmetros LoRa na
-prática, o que se perde sem LoRaWAN (ACK/endereçamento) e como o
-seq+CRC mitiga.
+prática, SDR/waterfall, o que se perde sem LoRaWAN (ACK/endereçamento)
+e como o seq+CRC mitiga.
+
+**Plano B** (se a decodificação SDR emperrar): segundo Ra-02 no
+`firmware/gateway`, voltando ao desenho original.
 
 ---
 
-## Fase 5 — Gateway: Wi-Fi + MQTT (aqui começa o DevOps de verdade)
+## Fase 5 — Gateway no PC: decodificador + MQTT (aqui começa o DevOps de verdade)
 
 **Objetivo:** dados do rádio chegando num broker MQTT.
 
+**Replanejada junto com a Fase 4:** o gateway é o PC. A ponte
+rádio → broker deixa de ser `esp_wifi`/`esp-mqtt` num ESP32 e vira um
+serviço no docker-compose (decodificador SDR → publicador MQTT).
+
 - [ ] `infra/docker-compose.yml` com Mosquitto (config mínima com
       listener 1883 e log)
-- [ ] Validar broker com `mosquitto_pub`/`mosquitto_sub` locais antes de
-      envolver a ESP32
-- [ ] No gateway: Wi-Fi STA (componente `esp_wifi` + tratamento de
-      reconexão) — entender o event loop do IDF
-- [ ] Componente `esp-mqtt`: publicar cada pacote recebido; definir
-      esquema de tópicos (`estacao/v1/temperatura`, ... ou JSON único em
-      `estacao/v1/dados` — decidir e documentar)
+- [ ] Validar broker com `mosquitto_pub`/`mosquitto_sub` locais
+- [ ] Ponte SDR → MQTT: serviço (Python + paho-mqtt) que recebe os
+      pacotes decodificados do `gr-lora_sdr`, valida CRC/seq e publica;
+      definir esquema de tópicos (`estacao/v1/...` — decidir e documentar)
 - [ ] QoS: começar com 0, entender quando 1 faria sentido
 - [ ] `docs/09-mqtt.md`
 
 **Aceitação:** `mosquitto_sub -t 'estacao/#' -v` no PC mostra os dados
-da estação chegando pelo caminho completo sensor → LoRa → Wi-Fi → broker.
+da estação chegando pelo caminho completo sensor → LoRa → SDR → broker.
 
-**Aprender:** MQTT (tópicos, QoS, retain), event loop e ciclo de vida do
-Wi-Fi no IDF, docker-compose, volumes e configuração de serviços.
+**Aprender:** MQTT (tópicos, QoS, retain), docker-compose, volumes,
+serviços conversando entre containers (decoder → broker).
+
+**Nota:** o aprendizado embarcado que sai de cena (`esp_wifi`,
+`esp-mqtt`, event loop do IDF) pode voltar como extra da Fase 7 num modo
+diagnóstico da estação, se sobrar tempo.
 
 ---
 
