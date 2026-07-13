@@ -56,7 +56,7 @@ sequenceDiagram
         P->>P: CRC16 confere? desserializa : descarta
         P->>B: publish JSON (retain)
         B--)W: push via WebSocket
-        Note over W: cards atualizam;<br/>flags de sensor em vermelho
+        Note over W: cards atualizam,<br/>flags de sensor em vermelho
     end
 ```
 
