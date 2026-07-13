@@ -152,8 +152,12 @@ do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
       contínua, flags 0x00, campos decodificados batendo com os
       sensores (validação do CRC16 no PC fica para a ponte MQTT da
       Fase 5, onde o pacote é desserializado)
-- [ ] Voltar para SF7/BW125 (enlace de produção)
-- [ ] Teste de perda: afastar estação do SDR, observar seq pulando
+- [ ] *(adiado — extra pós-Fase 6)* Voltar para SF7/BW125 (enlace de
+      produção); promover o SF a opção do menuconfig
+- [ ] *(adiado — extra pós-Fase 6)* Teste de perda: afastar estação do
+      SDR, observar seq pulando (decisão de 12/07/2026: MQTT e
+      dashboard primeiro — pipeline completo vale mais que enlace
+      otimizado)
 - [ ] `docs/08-lora.md` completo
 
 **Aceitação:** PC recebe o pacote real da estação via SDR, valida CRC,
@@ -176,9 +180,10 @@ e como o seq+CRC mitiga.
 rádio → broker deixa de ser `esp_wifi`/`esp-mqtt` num ESP32 e vira um
 serviço no docker-compose (decodificador SDR → publicador MQTT).
 
-- [ ] `infra/docker-compose.yml` com Mosquitto (config mínima com
-      listener 1883 e log)
-- [ ] Validar broker com `mosquitto_pub`/`mosquitto_sub` locais
+- [x] `infra/docker-compose.yml` com Mosquitto 2.0.20 (listener 1883,
+      anônimo de bancada, persistência em volume nomeado, log stdout)
+- [x] Validar broker com `mosquitto_pub`/`mosquitto_sub` (round-trip
+      pub/sub em `estacao/#` dentro do container)
 - [ ] Ponte SDR → MQTT: serviço (Python + paho-mqtt) que recebe os
       pacotes decodificados do `gr-lora_sdr`, valida CRC/seq e publica;
       definir esquema de tópicos (`estacao/v1/...` — decidir e documentar)
