@@ -32,6 +32,14 @@ RUN git clone https://github.com/tapparelj/gr-lora_sdr.git /opt/gr-lora_sdr \
     && cmake --install build \
     && ldconfig
 
+# paho-mqtt instalado DEPOIS da camada pesada de build de proposito:
+# adicionar dependencia leve nao invalida o cache da compilacao do
+# gr-lora_sdr (~5 min). Se o Dockerfile for reorganizado um dia,
+# consolidar no apt-get principal.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3-paho-mqtt \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY receptor_lora.py /app/receptor_lora.py
 WORKDIR /app
 
