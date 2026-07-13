@@ -143,8 +143,12 @@ do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
       polling (DIO0 fica para o RX)
 - [x] Validar o chirp no waterfall (gqrx): faixas de 125 kHz em
       433,000 MHz, ~1 s de duração, a cada 5 s — 4 critérios fechados
-- [ ] `gr-lora_sdr` (Docker) decodificando; payload = pacote da Fase 3;
-      validar CRC e seq no PC; depois voltar a SF7/BW125
+- [x] `gr-lora_sdr` (Docker) decodificando no PC: "chirp #N" com header
+      e CRC válidos, seq contínua (batalhas do debug em docs/08-lora.md:
+      GR_PYTHON_DIR no 24.04, buffer do SF12 e a forma de 2 argumentos
+      do set_min_output_buffer que o issue #55 nunca descobriu)
+- [ ] Payload = pacote de 18 B da Fase 3; validar CRC16 e seq no PC;
+      depois voltar a SF7/BW125
 - [ ] Teste de perda: afastar estação do SDR, observar seq pulando
 - [ ] `docs/08-lora.md` completo
 

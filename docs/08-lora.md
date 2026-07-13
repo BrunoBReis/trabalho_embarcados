@@ -107,13 +107,54 @@ make run
 Bring-up: `RegVersion=0x12` estável por minutos. TX: `TxDone em ~990 ms`
 a cada 5 s + as faixas no waterfall do gqrx em 433,0 MHz.
 
+## Decodificação no PC: gr-lora_sdr em Docker (risco eliminado)
+
+Pipeline completo validado: `chirp #N` impresso no PC com header e CRC
+válidos, sequência sem furos. O gateway agora é software:
+
+- `infra/sdr/Dockerfile`: Ubuntu 24.04 (GNU Radio 3.10.9 do apt) +
+  gr-osmosdr + `gr-lora_sdr` compilado da fonte, **fixado por commit**
+  (`862746d` — o projeto não publica releases). Pin = build de véspera
+  de apresentação não quebra.
+- `infra/sdr/receptor_lora.py`: réplica do exemplo oficial
+  (`examples/lora_RX.py`) trocando o USRP por RTL-SDR via osmosdr.
+  Parâmetros por variável de ambiente, casados 1:1 com o firmware.
+  LDRO calculado pelo critério do datasheet (símbolo > 16 ms), igual
+  nas duas pontas.
+- `infra/docker-compose.yml`: serviço `sdr-receptor` (privileged +
+  /dev/bus/usb para o dongle; refinável com device_cgroup_rules).
+
+### As três batalhas do debug (para não esquecer)
+
+1. **Python invisível no Ubuntu 24.04**: o cmake instala em
+   `site-packages`, Debian/Ubuntu só leem `dist-packages` →
+   `-DGR_PYTHON_DIR=/usr/lib/python3/dist-packages`.
+2. **SF12 estoura o buffer do GNU Radio**: o `frame_sync` pede um
+   símbolo inteiro por chamada (2^12 × os_factor + 4 = 8196 amostras)
+   e o buffer padrão oferece 8191 → flowgraph morre no boot (é o
+   issue #55 do gr-lora_sdr, aberto sem resposta).
+3. **A descoberta**: `set_min_output_buffer(N)` (forma de 1 argumento,
+   "todas as portas") é **silenciosamente ignorada** pelo binding
+   Python do GR 3.10; `set_min_output_buffer(0, N)` (porta explícita)
+   funciona. Provado por experimento controlado no container (fonte
+   nula, variantes lado a lado, sem hardware). Provavelmente é por
+   isso que o issue #55 segue aberto — o conserto "óbvio" usa a forma
+   quebrada. Fica um bloco `blocks.copy` na entrada só para portar o
+   buffer de 4 símbolos.
+
+### Como rodar
+
+```bash
+# estacao transmitindo (modo TX de teste) + dongle plugado, gqrx FECHADO
+cd infra && docker compose up sdr-receptor
+# esperado: Header (len/CRC/CR) + "rx msg: chirp #N" + "CRC valid!" a cada 5 s
+```
+
 ## Próximos passos
 
-1. `gr-lora_sdr` (Docker) para decodificar o payload no PC — o item de
-   maior risco do replanejamento; validar antes de qualquer outra coisa.
-2. Payload real: substituir o texto pelo pacote de 18 B da Fase 3
-   (CRC16 + seq); validar no decodificador.
-3. Voltar para SF7/BW125 (o enlace de produção) e medir perda via seq.
+1. Payload real: substituir o texto pelo pacote de 18 B da Fase 3
+   (CRC16 + seq); `LORA_FORMATO=hex` no compose; validar no PC.
+2. Voltar para SF7/BW125 (o enlace de produção) e medir perda via seq.
 
 Referências: Semtech **AN1200.22** (LoRa Modulation Basics), datasheet
 SX1276/77/78/79 cap. 4.1, calculadora de airtime do TTN.
