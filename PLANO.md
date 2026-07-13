@@ -147,8 +147,12 @@ do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
       e CRC válidos, seq contínua (batalhas do debug em docs/08-lora.md:
       GR_PYTHON_DIR no 24.04, buffer do SF12 e a forma de 2 argumentos
       do set_min_output_buffer que o issue #55 nunca descobriu)
-- [ ] Payload = pacote de 18 B da Fase 3; validar CRC16 e seq no PC;
-      depois voltar a SF7/BW125
+- [x] Payload = pacote de 18 B da Fase 3 transmitido pelo modo estação
+      (intervalo 10 s p/ bancada) e recebido íntegro no PC: seq
+      contínua, flags 0x00, campos decodificados batendo com os
+      sensores (validação do CRC16 no PC fica para a ponte MQTT da
+      Fase 5, onde o pacote é desserializado)
+- [ ] Voltar para SF7/BW125 (enlace de produção)
 - [ ] Teste de perda: afastar estação do SDR, observar seq pulando
 - [ ] `docs/08-lora.md` completo
 

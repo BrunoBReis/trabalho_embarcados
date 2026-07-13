@@ -150,11 +150,32 @@ cd infra && docker compose up sdr-receptor
 # esperado: Header (len/CRC/CR) + "rx msg: chirp #N" + "CRC valid!" a cada 5 s
 ```
 
+## Payload real: a estação no ar
+
+O modo estação agora transmite o pacote de 18 B após montá-lo (o
+`ESP_LOG_BUFFER_HEX` continua, para conferência lado a lado). Decisões:
+
+- **Rádio ausente não derruba a estação** (coerente com a Fase 3):
+  selftest `lora` no boot; sem 0x12, o loop segue só com log e LED
+  vermelho. TX com falha idem.
+- **LED**: verde = pacote no ar, sensores ok; amarelo = no ar com
+  flags de sensor; vermelho = rádio mudo/TX falhando.
+- **Dois CRCs por design**: o CRC do quadro LoRa (PHY, só protege o
+  trecho aéreo — o "CRC valid!" do gr-lora_sdr) e o nosso CRC16-CCITT
+  dentro do payload (fim-a-fim: continua conferível depois do MQTT e
+  do banco). A validação do CRC16 no PC entra na ponte MQTT (Fase 5).
+- Intervalo baixado para 10 s no sdkconfig (previsto no PLANO p/ Fase 4).
+
+Validado: `Payload length: 18`, seq contínua, flags 0x00 (todos os
+sensores, DHT11 incluso), campos decodificados à mão batendo
+(22,6 °C / 906 hPa / 71 % — valores plausíveis de Brasília). Exemplo
+recebido no PC: `04 00 d4 08 f2 61 01 00 47 ba 0a ff 0f 00 00 00 f8 ef`.
+
 ## Próximos passos
 
-1. Payload real: substituir o texto pelo pacote de 18 B da Fase 3
-   (CRC16 + seq); `LORA_FORMATO=hex` no compose; validar no PC.
-2. Voltar para SF7/BW125 (o enlace de produção) e medir perda via seq.
+1. Voltar para SF7/BW125 (o enlace de produção; pacote de 18 B cai de
+   ~1,3 s para ~60 ms no ar) e medir perda via seq.
+2. Fase 5: ponte SDR → MQTT (valida CRC16 + desserializa + publica).
 
 Referências: Semtech **AN1200.22** (LoRa Modulation Basics), datasheet
 SX1276/77/78/79 cap. 4.1, calculadora de airtime do TTN.
