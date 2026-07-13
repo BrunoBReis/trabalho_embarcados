@@ -187,13 +187,14 @@ serviço no docker-compose (decodificador SDR → publicador MQTT).
 - [x] Ponte SDR → MQTT: bloco `PonteMqtt` no receptor (porta de
       mensagens do crc_verif → CRC16 fim-a-fim → JSON via paho-mqtt);
       tópico único `estacao/v1/dados`; validada com pacotes reais da
-      Fase 4 reinjetados via PMT (falta só o ao-vivo, que é a aceitação)
+      Fase 4 reinjetados via PMT e depois AO VIVO na bancada (12/07)
 - [x] QoS 0 + retain (telemetria tolera perda; QoS 1 seria p/ comandos)
       — decisão documentada em docs/09-mqtt.md
-- [ ] `docs/09-mqtt.md`
+- [x] `docs/09-mqtt.md`
 
-**Aceitação:** `mosquitto_sub -t 'estacao/#' -v` no PC mostra os dados
-da estação chegando pelo caminho completo sensor → LoRa → SDR → broker.
+**Aceitação:** ✅ (12/07/2026) `mosquitto_sub -t 'estacao/#' -v` no PC
+mostra os dados da estação chegando pelo caminho completo
+sensor → LoRa → SDR → broker.
 
 **Aprender:** MQTT (tópicos, QoS, retain), docker-compose, volumes,
 serviços conversando entre containers (decoder → broker).

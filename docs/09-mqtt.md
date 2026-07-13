@@ -76,8 +76,9 @@ dentro do container: CRC16 conferiu, campos decodificados (22,62 °C /
 (que conectou depois — retain comprovado). Caminho de descarte testado
 com payload de tamanho errado.
 
-## Próximos passos
+## Aceitação da fase (12/07/2026) ✅
 
-1. Validação ao vivo: estação + dongle + `docker compose up` +
-   `mosquitto_sub -t 'estacao/#' -v` — o critério de aceitação da fase.
-2. Fase 6: persistência + dashboard em cima do broker.
+Ao vivo na bancada: `mosquitto_sub -t 'estacao/#' -v` mostrando o JSON
+da estação a cada 10 s pelo caminho completo
+`sensores → SX1278 → 433 MHz → RTL-SDR → gr-lora_sdr → CRC16 → MQTT`.
+A Fase 5 está fechada; próximo: Fase 6 (persistência + dashboard).
