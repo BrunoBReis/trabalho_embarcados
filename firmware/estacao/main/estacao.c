@@ -30,11 +30,32 @@ static i2c_master_bus_handle_t iniciar_barramento_i2c(void) {
 #if CONFIG_ESTACAO_TESTE_TODOS || CONFIG_ESTACAO_MODO_ESTACAO
 
 #include "led_status.h"
+#include "lora.h"
 #include "pacote.h"
 #include "sensor_chuva.h"
 #include "sensor_dht11.h"
 #include "sensor_ldr.h"
 #include "sensor_vento.h"
+
+// Resultado do bring-up do radio no autoteste; o modo estacao usa para
+// decidir se transmite (radio mudo nao derruba o loop).
+static bool s_lora_ok = false;
+
+// Bring-up completo do Ra-02: SPI + reset, prova de vida (RegVersion
+// 0x12) e configuracao do modem. So pode rodar UMA vez (o driver SPI
+// nao aceita reinicializar o barramento).
+static esp_err_t lora_autoteste(void) {
+  esp_err_t err = lora_init();
+  if (err != ESP_OK) return err;
+  uint8_t versao = 0;
+  err = lora_ler_reg(LORA_REG_VERSION, &versao);
+  if (err != ESP_OK) return err;
+  if (versao != 0x12) return ESP_ERR_INVALID_RESPONSE;
+  err = lora_config_modem();
+  if (err != ESP_OK) return err;
+  s_lora_ok = true;
+  return ESP_OK;
+}
 
 // Um veredito por componente, em formato estavel para o tools/bancada.py.
 // Retorna true se OK.
@@ -58,6 +79,9 @@ static int autoteste(i2c_master_bus_handle_t bus) {
 
   // CRC do pacote LoRa contra vetor conhecido (regressao acusa no boot).
   falhas += !selftest("pacote", pacote_selfcheck() ? ESP_OK : ESP_FAIL);
+
+  // Radio: comunicacao SPI real (RegVersion) + modem configurado.
+  falhas += !selftest("lora", lora_autoteste());
 
   falhas += !selftest("bmp280", sensor_bmp280_init(bus));
   falhas += !selftest("ldr", sensor_ldr_init());
@@ -122,28 +146,18 @@ void app_main(void) {
 
 #if CONFIG_ESTACAO_MODO_ESTACAO
 
-#include "lora.h"
-
 // Firmware da estacao: a cada intervalo, le todos os sensores, monta o
 // pacote binario (formato de common/pacote), imprime legivel + hex e o
 // TRANSMITE por LoRa. Falha de sensor vira bit em flags e campo zerado;
 // radio ausente nao derruba o loop (fica so o log + LED de falha).
+// O bring-up do radio acontece dentro do autoteste ([SELFTEST] lora).
 void app_main(void) {
   i2c_master_bus_handle_t bus = iniciar_barramento_i2c();
   int falhas_boot = autoteste(bus);
   if (falhas_boot > 0) {
     ESP_LOGW(TAG, "iniciando com %d componente(s) em falha", falhas_boot);
   }
-
-  bool lora_ok = false;
-  if (lora_init() == ESP_OK) {
-    uint8_t versao = 0;
-    if (lora_ler_reg(LORA_REG_VERSION, &versao) == ESP_OK && versao == 0x12) {
-      ESP_ERROR_CHECK(lora_config_modem());
-      lora_ok = true;
-    }
-  }
-  if (!selftest("lora", lora_ok ? ESP_OK : ESP_ERR_TIMEOUT)) {
+  if (!s_lora_ok) {
     ESP_LOGE(TAG, "radio mudo: pacotes ficarao so no log serial");
   }
 
@@ -204,7 +218,7 @@ void app_main(void) {
     ESP_LOG_BUFFER_HEX(TAG, &pacote, sizeof(pacote));
 
     bool tx_falhou = false;
-    if (lora_ok) {
+    if (s_lora_ok) {
       uint32_t ms = 0;
       if (lora_tx((const uint8_t *)&pacote, sizeof(pacote), &ms) == ESP_OK) {
         ESP_LOGI(TAG, "LoRa TX ok: %u bytes, %lu ms no ar",
@@ -215,7 +229,7 @@ void app_main(void) {
       }
     }
 
-    led_status_definir((!lora_ok || tx_falhou) ? LED_STATUS_FALHA
+    led_status_definir((!s_lora_ok || tx_falhou) ? LED_STATUS_FALHA
                        : pacote.flags == 0     ? LED_STATUS_OK
                                                : LED_STATUS_ERRO_SENSOR);
   }

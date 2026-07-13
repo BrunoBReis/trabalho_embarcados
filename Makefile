@@ -25,13 +25,16 @@ export HOST_GID  := $(shell id -g)
 TTYFLAG = $(shell test -t 0 || echo -T)
 
 COMPOSE = docker compose
+# A infra do gateway (broker, receptor SDR, dashboard) tem compose
+# proprio; o -f define tambem o diretorio-base dos caminhos relativos.
+COMPOSE_INFRA = $(COMPOSE) -f infra/docker-compose.yml
 # Tarefas efêmeras: cada comando cria um container e o destrói no final.
 RUN     = $(COMPOSE) run --rm $(TTYFLAG) toolchain
 # Variante com a porta serial — apenas flash/monitor/erase precisam da
 # placa conectada; o build nunca deve depender dela.
 RUN_DEV = $(COMPOSE) run --rm $(TTYFLAG) dev
 
-.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada
+.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada infra-up infra-down infra-logs infra-build mqtt-sub
 
 help:
 	@printf 'Targets disponíveis:\n'
@@ -47,6 +50,12 @@ help:
 	@printf '  make shell          Abre um bash dentro do container\n'
 	@printf '  make lsp-setup      Extrai IDF/toolchain para /opt/esp (1x, ~3 GB, p/ clangd)\n'
 	@printf '  make test-bancada   Valida o autoteste dos sensores pela serial\n'
+	@printf '\nInfra do gateway (broker + receptor SDR + dashboard):\n'
+	@printf '  make infra-up       Sobe os serviços em segundo plano\n'
+	@printf '  make infra-down     Derruba os serviços\n'
+	@printf '  make infra-logs     Segue os logs de todos os serviços (sair: Ctrl+C)\n'
+	@printf '  make infra-build    (Re)constrói as imagens da infra\n'
+	@printf '  make mqtt-sub       Mostra os dados chegando no broker (sair: Ctrl+C)\n'
 	@printf '\nVariáveis (sobrescrever na chamada ou no .env):\n'
 	@printf '  PROJ=%s\n' '$(PROJ)'
 	@printf '  PORT=%s\n' '$(PORT)'
@@ -82,6 +91,24 @@ clean:
 
 shell:
 	$(RUN) bash
+
+infra-up:
+	$(COMPOSE_INFRA) up -d
+	@echo "dashboard: http://localhost:8080  |  broker: localhost:1883 (ws 9001)"
+
+infra-down:
+	$(COMPOSE_INFRA) down
+
+infra-logs:
+	$(COMPOSE_INFRA) logs -f
+
+infra-build:
+	$(COMPOSE_INFRA) build
+
+# Assinante de conferência rodando DENTRO do container do broker:
+# não exige mosquitto-clients instalado no host.
+mqtt-sub:
+	$(COMPOSE_INFRA) exec mosquitto mosquitto_sub -t 'estacao/#' -v
 
 # Requer o firmware gravado com o teste "todos (modo bancada)".
 test-bancada:

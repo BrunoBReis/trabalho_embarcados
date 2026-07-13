@@ -171,11 +171,21 @@ sensores, DHT11 incluso), campos decodificados à mão batendo
 (22,6 °C / 906 hPa / 71 % — valores plausíveis de Brasília). Exemplo
 recebido no PC: `04 00 d4 08 f2 61 01 00 47 ba 0a ff 0f 00 00 00 f8 ef`.
 
+## LoRa no autoteste de bancada
+
+O bring-up do rádio virou item do `[SELFTEST]` compartilhado
+(`lora_autoteste()`: SPI + RegVersion 0x12 + modem configurado), então
+vale para o modo bancada E para o modo estação — e o `tools/bancada.py`
+(`make test-bancada`) passou a exigir `lora OK` junto com os demais
+componentes. Detalhe de implementação: o bring-up roda UMA vez, dentro
+do autoteste (o driver SPI do IDF não aceita reinicializar o
+barramento); o modo estação só consome o resultado (`s_lora_ok`).
+
 ## Próximos passos
 
 1. Voltar para SF7/BW125 (o enlace de produção; pacote de 18 B cai de
-   ~1,3 s para ~60 ms no ar) e medir perda via seq.
-2. Fase 5: ponte SDR → MQTT (valida CRC16 + desserializa + publica).
+   ~1,3 s para ~60 ms no ar) e medir perda via seq. *(adiado — extra)*
+2. Fase 5: ponte SDR → MQTT (valida CRC16 + desserializa + publica). ✅
 
 Referências: Semtech **AN1200.22** (LoRa Modulation Basics), datasheet
 SX1276/77/78/79 cap. 4.1, calculadora de airtime do TTN.
