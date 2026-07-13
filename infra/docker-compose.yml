@@ -6,6 +6,7 @@ services:
     container_name: mosquitto
     ports:
       - "1883:1883"                   # exposto no host p/ mosquitto_sub/pub
+      - "9001:9001"                   # MQTT sobre WebSocket p/ o dashboard
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto-data:/mosquitto/data
@@ -32,6 +33,17 @@ services:
       MQTT_HOST: "mosquitto"   # nome do servico = hostname na rede do compose
       MQTT_PORT: "1883"
       MQTT_TOPICO_DADOS: "estacao/v1/dados"
+
+  # Dashboard: pagina estatica; o browser assina o MQTT direto via
+  # WebSocket (porta 9001) — nenhum backend proprio.
+  dashboard:
+    image: nginx:1.27-alpine          # pin de versao
+    container_name: dashboard
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    restart: unless-stopped
 
 volumes:
   mosquitto-data:

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estação Meteorológica — IoT (FGA/UnB)</title>
+<script src="mqtt.min.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: system-ui, sans-serif;
+    background: #10151c; color: #e8edf2;
+    min-height: 100vh; padding: 2rem;
+  }
+  header { display: flex; align-items: baseline; gap: .75rem;
+           flex-wrap: wrap; margin-bottom: 1.5rem; }
+  h1 { font-size: 1.3rem; font-weight: 600; }
+  .sub { color: #8b98a5; font-size: .85rem; }
+  #status { font-size: .8rem; padding: .2rem .6rem; border-radius: 1rem;
+            background: #3a2828; color: #ff9d9d; }
+  #status.ok { background: #22392a; color: #8fe3a8; }
+  .cards { display: grid; gap: 1rem;
+           grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .card { background: #1a222d; border-radius: .75rem; padding: 1rem 1.2rem;
+          border: 1px solid #263241; }
+  .card .rotulo { color: #8b98a5; font-size: .78rem;
+                  text-transform: uppercase; letter-spacing: .05em; }
+  .card .valor { font-size: 1.9rem; font-weight: 650; margin-top: .3rem;
+                 font-variant-numeric: tabular-nums; }
+  .card .unidade { font-size: .95rem; color: #8b98a5; margin-left: .15rem; }
+  .card.falha { border-color: #7a3a3a; }
+  .card.falha .valor { color: #ff9d9d; }
+  .meta { margin-top: 1.25rem; color: #8b98a5; font-size: .85rem;
+          display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  #log { margin-top: 1.5rem; }
+  #log h2 { font-size: .9rem; color: #8b98a5; margin-bottom: .5rem; }
+  #log pre { background: #0c1117; border-radius: .5rem; padding: .8rem 1rem;
+             font-size: .78rem; line-height: 1.6; overflow-x: auto;
+             max-height: 14rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🌦️ Estação Meteorológica</h1>
+  <span class="sub">ESP32 → LoRa 433 MHz → RTL-SDR → MQTT → este browser</span>
+  <span id="status">desconectado</span>
+</header>
+
+<div class="cards">
+  <div class="card" id="c-temp"><div class="rotulo">Temperatura</div>
+    <div class="valor"><span id="v-temp">—</span><span class="unidade">°C</span></div></div>
+  <div class="card" id="c-umid"><div class="rotulo">Umidade</div>
+    <div class="valor"><span id="v-umid">—</span><span class="unidade">%</span></div></div>
+  <div class="card" id="c-press"><div class="rotulo">Pressão</div>
+    <div class="valor"><span id="v-press">—</span><span class="unidade">hPa</span></div></div>
+  <div class="card" id="c-luz"><div class="rotulo">Luz (bruto)</div>
+    <div class="valor"><span id="v-luz">—</span></div></div>
+  <div class="card" id="c-chuva"><div class="rotulo">Chuva (bruto)</div>
+    <div class="valor"><span id="v-chuva">—</span></div></div>
+  <div class="card" id="c-vento"><div class="rotulo">Vento</div>
+    <div class="valor"><span id="v-vento">—</span><span class="unidade">ppm</span></div></div>
+</div>
+
+<div class="meta">
+  <span>pacote seq: <b id="v-seq">—</b></span>
+  <span>recebido: <b id="v-hora">—</b></span>
+  <span>sensores em falha: <b id="v-falhas">—</b></span>
+</div>
+
+<div id="log"><h2>Últimos pacotes</h2><pre id="v-log"></pre></div>
+
+<script>
+// O browser E um cliente MQTT: assina o mesmo topico que o
+// mosquitto_sub, via WebSocket (listener 9001 do Mosquitto). O retain
+// do broker entrega o ultimo pacote assim que a pagina conecta.
+const TOPICO = "estacao/v1/dados";
+const url = `ws://${location.hostname || "localhost"}:9001`;
+const statusEl = document.getElementById("status");
+const logEl = document.getElementById("v-log");
+const FLAGS = { bmp280: "c-temp", dht11: "c-umid", ldr: "c-luz",
+                chuva: "c-chuva" };
+
+const cliente = mqtt.connect(url);
+
+cliente.on("connect", () => {
+  statusEl.textContent = "conectado ao broker";
+  statusEl.classList.add("ok");
+  cliente.subscribe(TOPICO);
+});
+cliente.on("close", () => {
+  statusEl.textContent = "desconectado";
+  statusEl.classList.remove("ok");
+});
+
+cliente.on("message", (_topico, payload) => {
+  let d;
+  try { d = JSON.parse(payload.toString()); }
+  catch { return; }
+
+  const põe = (id, v) => document.getElementById(id).textContent = v;
+  põe("v-temp", d.temp_c.toFixed(1));
+  põe("v-umid", d.umid_pct);
+  põe("v-press", d.press_hpa.toFixed(1));
+  põe("v-luz", d.luz_raw);
+  põe("v-chuva", d.chuva_raw);
+  põe("v-vento", d.vento_ppm);
+  põe("v-seq", d.seq);
+  põe("v-hora", new Date(d.ts * 1000).toLocaleTimeString("pt-BR"));
+  põe("v-falhas", d.sensores_em_falha.length ? d.sensores_em_falha.join(", ")
+                                             : "nenhum ✓");
+
+  // pinta de vermelho o card do sensor cuja flag de erro veio ligada
+  for (const [sensor, card] of Object.entries(FLAGS))
+    document.getElementById(card).classList
+            .toggle("falha", d.sensores_em_falha.includes(sensor));
+
+  const linha = `${new Date(d.ts * 1000).toLocaleTimeString("pt-BR")}  ` +
+                `seq=${String(d.seq).padStart(5)}  T=${d.temp_c}°C  ` +
+                `U=${d.umid_pct}%  P=${d.press_hpa}hPa  flags=${d.flags}`;
+  logEl.textContent = (linha + "\n" + logEl.textContent)
+                      .split("\n").slice(0, 30).join("\n");
+});
+</script>
+</body>
+</html>
