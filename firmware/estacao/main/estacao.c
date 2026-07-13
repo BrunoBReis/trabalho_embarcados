@@ -360,3 +360,47 @@ void app_main(void) {
 }
 
 #endif // CONFIG_ESTACAO_TESTE_LORA
+
+#if CONFIG_ESTACAO_TESTE_LORA_TX
+
+#include <stdio.h>
+
+#include "lora.h"
+
+// Primeiro TX de verdade: um pacote curto a cada 5 s em SF12 (simbolo
+// de 32,8 ms — chirps visiveis no waterfall do SDR) e potencia minima
+// (+2 dBm). Validacao: no gqrx em 433,0 MHz, um claro de ~1 s deve
+// aparecer no instante exato de cada log de TxDone.
+void app_main(void) {
+  ESP_ERROR_CHECK(lora_init());
+
+  uint8_t versao = 0;
+  ESP_ERROR_CHECK(lora_ler_reg(LORA_REG_VERSION, &versao));
+  if (versao != 0x12) {
+    ESP_LOGE(TAG, "RegVersion=0x%02X — radio mudo, conferir fiacao antes do TX",
+             versao);
+    return;
+  }
+  ESP_ERROR_CHECK(lora_config_modem());
+
+  uint32_t n = 0;
+  while (true) {
+    char msg[24];
+    int len = snprintf(msg, sizeof(msg), "chirp #%lu", (unsigned long)n);
+    ESP_LOGI(TAG, "TX #%lu (%d bytes)...", (unsigned long)n, len);
+
+    uint32_t ms = 0;
+    esp_err_t err = lora_tx((const uint8_t *)msg, (uint8_t)len, &ms);
+    if (err == ESP_OK) {
+      ESP_LOGI(TAG, "TxDone em %lu ms (esperado ~1 s em SF12)",
+               (unsigned long)ms);
+    } else {
+      ESP_LOGE(TAG, "TX falhou: %s", esp_err_to_name(err));
+    }
+
+    n++;
+    vTaskDelay(pdMS_TO_TICKS(5000));
+  }
+}
+
+#endif // CONFIG_ESTACAO_TESTE_LORA_TX

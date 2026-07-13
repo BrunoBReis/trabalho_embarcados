@@ -17,3 +17,13 @@ esp_err_t lora_init(void);
 
 // Le um registrador de 8 bits do SX1278.
 esp_err_t lora_ler_reg(uint8_t reg, uint8_t *valor);
+
+// Configura o modem LoRa: 433,0 MHz, BW 125 kHz, CR 4/5, SF12, CRC on,
+// potencia MINIMA (+2 dBm — fixa; ver comentario no .c). Chip fica em
+// standby, sem transmitir.
+esp_err_t lora_config_modem(void);
+
+// Transmite um payload (ate 32 B neste passo) e espera o TxDone por
+// polling. ms_no_ar (opcional) devolve quanto tempo o radio levou —
+// em SF12 um payload curto fica em ~1 s, otimo para conferencia.
+esp_err_t lora_tx(const uint8_t *dados, uint8_t len, uint32_t *ms_no_ar);

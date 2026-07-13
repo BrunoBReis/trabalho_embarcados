@@ -35,6 +35,9 @@ menu "Estacao - teste de bancada"
         config ESTACAO_TESTE_LORA
             bool "LoRa Ra-02 - bring-up SPI (le RegVersion, espera 0x12)"
 
+        config ESTACAO_TESTE_LORA_TX
+            bool "LoRa Ra-02 - TX de teste (433.0 MHz, SF12, +2 dBm)"
+
     endchoice
 
     config ESTACAO_INTERVALO_S

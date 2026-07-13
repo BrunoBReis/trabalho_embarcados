@@ -64,6 +64,38 @@ esp_err_t lora_init(void) {
   return ESP_OK;
 }
 
+// --- Registradores do SX1278 (datasheet, tabela 41; modo LoRa) ---
+#define REG_FIFO 0x00
+#define REG_OP_MODE 0x01
+#define REG_FRF_MSB 0x06  // frequencia em 3 bytes, passo Fxosc/2^19
+#define REG_PA_CONFIG 0x09
+#define REG_FIFO_ADDR_PTR 0x0D
+#define REG_FIFO_TX_BASE 0x0E
+#define REG_IRQ_FLAGS 0x12
+#define REG_MODEM_CONFIG1 0x1D
+#define REG_MODEM_CONFIG2 0x1E
+#define REG_PAYLOAD_LENGTH 0x22
+#define REG_MODEM_CONFIG3 0x26
+
+// RegOpMode: LongRangeMode (LoRa) + LowFrequencyModeOn (banda de 433).
+// A troca pro modo LoRa so e aceita com o chip em SLEEP.
+#define OPMODE_LORA_LF 0x88  // base: LoRa | LF | sleep
+#define OPMODE_STANDBY (OPMODE_LORA_LF | 0x01)
+#define OPMODE_TX (OPMODE_LORA_LF | 0x03)
+
+#define IRQ_TX_DONE 0x08
+
+// Potencia FIXA no minimo do PA_BOOST (unica saida ligada a antena no
+// Ra-02): +2 dBm (~1,6 mW). Na bancada isso e proposital e importa:
+// (1) inofensivo para o PA mesmo em carga ruim/aberta enquanto a
+// cadeia de antena nao esta comprovada; (2) alcance de sobra ate o
+// SDR. NAO subir sem antena validada e sem justificativa.
+#define PA_CONFIG_BOOST_2DBM 0x80
+
+// 433,0 MHz de proposito (longe dos controles de portao em 433,92):
+// Frf = f / (32 MHz / 2^19) -> 433e6 * 2^19 / 32e6 = 0x6C4000.
+#define FRF_433_0_MHZ 0x6C4000
+
 esp_err_t lora_ler_reg(uint8_t reg, uint8_t *valor) {
   // Transacao de 2 bytes, full-duplex: manda [endereco | wnr=0] e um
   // byte qualquer; o registrador volta pelo MISO no segundo byte.
@@ -77,4 +109,85 @@ esp_err_t lora_ler_reg(uint8_t reg, uint8_t *valor) {
   esp_err_t err = spi_device_transmit(s_spi, &t);
   if (err == ESP_OK) *valor = rx[1];
   return err;
+}
+
+// Escrita: mesmo formato da leitura, com o MSB do endereco em 1 (wnr).
+static esp_err_t escrever_reg(uint8_t reg, uint8_t valor) {
+  uint8_t tx[2] = {reg | 0x80, valor};
+  spi_transaction_t t = {
+      .length = 16,
+      .tx_buffer = tx,
+  };
+  return spi_device_transmit(s_spi, &t);
+}
+
+// Escrita em rajada na FIFO: endereco uma vez, N bytes em seguida (o
+// ponteiro interno avanca sozinho).
+static esp_err_t escrever_fifo(const uint8_t *dados, uint8_t len) {
+  uint8_t tx[33];
+  tx[0] = REG_FIFO | 0x80;
+  for (int i = 0; i < len; i++) tx[i + 1] = dados[i];
+  spi_transaction_t t = {
+      .length = (1 + len) * 8,
+      .tx_buffer = tx,
+  };
+  return spi_device_transmit(s_spi, &t);
+}
+
+esp_err_t lora_config_modem(void) {
+  // LoRa so pode ser ligado em SLEEP; depois tudo se configura em standby.
+  ESP_ERROR_CHECK(escrever_reg(REG_OP_MODE, OPMODE_LORA_LF));
+  vTaskDelay(pdMS_TO_TICKS(2));
+
+  ESP_ERROR_CHECK(escrever_reg(REG_FRF_MSB + 0, (FRF_433_0_MHZ >> 16) & 0xFF));
+  ESP_ERROR_CHECK(escrever_reg(REG_FRF_MSB + 1, (FRF_433_0_MHZ >> 8) & 0xFF));
+  ESP_ERROR_CHECK(escrever_reg(REG_FRF_MSB + 2, FRF_433_0_MHZ & 0xFF));
+
+  ESP_ERROR_CHECK(escrever_reg(REG_PA_CONFIG, PA_CONFIG_BOOST_2DBM));
+
+  // BW 125 kHz (0111....), CR 4/5 (...001.), header explicito (.....0)
+  ESP_ERROR_CHECK(escrever_reg(REG_MODEM_CONFIG1, 0x72));
+  // SF12 (1100....), CRC do payload ligado (.....1..)
+  ESP_ERROR_CHECK(escrever_reg(REG_MODEM_CONFIG2, 0xC4));
+  // LowDataRateOptimize (obrigatorio: simbolo de 32,8 ms > 16 ms) + AGC
+  ESP_ERROR_CHECK(escrever_reg(REG_MODEM_CONFIG3, 0x0C));
+
+  ESP_ERROR_CHECK(escrever_reg(REG_OP_MODE, OPMODE_STANDBY));
+  ESP_LOGI(TAG, "modem: 433.0 MHz, SF12, BW 125 kHz, CR 4/5, +2 dBm");
+  return ESP_OK;
+}
+
+esp_err_t lora_tx(const uint8_t *dados, uint8_t len, uint32_t *ms_no_ar) {
+  if (len == 0 || len > 32) return ESP_ERR_INVALID_ARG;
+
+  ESP_ERROR_CHECK(escrever_reg(REG_OP_MODE, OPMODE_STANDBY));
+
+  // Payload na FIFO: aponta o ponteiro para a base de TX e despeja.
+  ESP_ERROR_CHECK(escrever_reg(REG_FIFO_TX_BASE, 0x00));
+  ESP_ERROR_CHECK(escrever_reg(REG_FIFO_ADDR_PTR, 0x00));
+  ESP_ERROR_CHECK(escrever_fifo(dados, len));
+  ESP_ERROR_CHECK(escrever_reg(REG_PAYLOAD_LENGTH, len));
+
+  // Limpa flags pendentes e dispara. O radio volta a standby sozinho
+  // quando termina, deixando TxDone em RegIrqFlags.
+  ESP_ERROR_CHECK(escrever_reg(REG_IRQ_FLAGS, 0xFF));
+  ESP_ERROR_CHECK(escrever_reg(REG_OP_MODE, OPMODE_TX));
+
+  TickType_t inicio = xTaskGetTickCount();
+  while (true) {
+    uint8_t irq = 0;
+    ESP_ERROR_CHECK(lora_ler_reg(REG_IRQ_FLAGS, &irq));
+    if (irq & IRQ_TX_DONE) break;
+    if ((xTaskGetTickCount() - inicio) > pdMS_TO_TICKS(5000)) {
+      ESP_LOGE(TAG, "timeout esperando TxDone (irq=0x%02X)", irq);
+      return ESP_ERR_TIMEOUT;
+    }
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+  ESP_ERROR_CHECK(escrever_reg(REG_IRQ_FLAGS, 0xFF));
+
+  if (ms_no_ar) {
+    *ms_no_ar = (xTaskGetTickCount() - inicio) * portTICK_PERIOD_MS;
+  }
+  return ESP_OK;
 }
