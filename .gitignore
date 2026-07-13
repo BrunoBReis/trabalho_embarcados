@@ -16,3 +16,10 @@ firmware/*/managed_components/
 
 # Site gerado pelo MkDocs (make docs-build)
 site/
+
+# Saidas regeneraveis do WireViz (o SVG e o YAML ficam versionados)
+docs/wireviz/*.png
+docs/wireviz/*.html
+docs/wireviz/*.gv
+docs/wireviz/*.tsv
+docs/wireviz/*.tmp

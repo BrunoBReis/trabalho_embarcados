@@ -31,13 +31,14 @@ COMPOSE_INFRA = $(COMPOSE) -f infra/docker-compose.yml
 
 # Documentacao (MkDocs Material em container; pin de versao).
 DOCS_IMAGE = squidfunk/mkdocs-material:9.5
+WIREVIZ_VERSION = 0.4.1
 # Tarefas efêmeras: cada comando cria um container e o destrói no final.
 RUN     = $(COMPOSE) run --rm $(TTYFLAG) toolchain
 # Variante com a porta serial — apenas flash/monitor/erase precisam da
 # placa conectada; o build nunca deve depender dela.
 RUN_DEV = $(COMPOSE) run --rm $(TTYFLAG) dev
 
-.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada infra-up infra-down infra-logs infra-build mqtt-sub docs-serve docs-build
+.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada infra-up infra-down infra-logs infra-build mqtt-sub docs-serve docs-build docs-wireviz
 
 help:
 	@printf 'Targets disponíveis:\n'
@@ -62,6 +63,7 @@ help:
 	@printf '\nDocumentação (MkDocs Material em container):\n'
 	@printf '  make docs-serve     Serve em http://localhost:8000 com live reload\n'
 	@printf '  make docs-build     Gera o site estático em site/\n'
+	@printf '  make docs-wireviz   Regenera o diagrama de fiação (docs/wireviz/)\n'
 	@printf '\nVariáveis (sobrescrever na chamada ou no .env):\n'
 	@printf '  PROJ=%s\n' '$(PROJ)'
 	@printf '  PORT=%s\n' '$(PORT)'
@@ -122,6 +124,17 @@ docs-serve:
 
 docs-build:
 	docker run --rm -v $(CURDIR):/docs $(DOCS_IMAGE) build
+
+# Diagrama de fiacao a partir do YAML (docs/wireviz/estacao.yml).
+# Raramente roda, entao usa um container descartavel em vez de imagem
+# propria; versao do wireviz fixada.
+docs-wireviz:
+	docker run --rm -v $(CURDIR):/w -w /w python:3.12-slim sh -c "\
+		apt-get update -qq >/dev/null && \
+		apt-get install -y -qq --no-install-recommends graphviz >/dev/null && \
+		pip install -q wireviz==$(WIREVIZ_VERSION) && \
+		wireviz docs/wireviz/estacao.yml"
+	@echo "gerado: docs/wireviz/estacao.svg (versionar) + png/html/bom"
 
 # Requer o firmware gravado com o teste "todos (modo bancada)".
 test-bancada:

@@ -4,12 +4,21 @@ A fonte de verdade da pinagem é o **CLAUDE.md** (contrato do projeto) e
 as justificativas técnicas estão em [Pinagem](pinagem.md). Esta página
 apresenta a topologia — o que liga em quê, por qual barramento.
 
-!!! note "Mermaid vs ferramenta dedicada"
-    Mermaid resolve bem a *topologia* (abaixo). Para diagrama de
-    fiação físico (cores de fio, conectores, pino a pino desenhado), a
-    ferramenta certa é o **[WireViz](https://github.com/wireviz/WireViz)**
-    (YAML → SVG) — anotado como extra futuro. A tabela continua sendo
-    o contrato.
+## Diagrama de fiação (WireViz)
+
+Gerado a partir de [`docs/wireviz/estacao.yml`](https://github.com/BrunoBReis/trabalho_embarcados/blob/main/docs/wireviz/estacao.yml)
+com o [WireViz](https://github.com/wireviz/WireViz) — mexeu na fiação,
+edita o YAML e roda `make docs-wireviz`; o diagrama nunca desatualiza
+porque *é* gerado do contrato. Cores = sugestão para os jumpers
+(vermelho 3V3, preto GND).
+
+![Diagrama de fiação da estação](wireviz/estacao.svg)
+
+!!! note "Por que duas visões?"
+    O WireViz mostra o *chicote físico* (fio a fio, com cores e
+    numeração de pinos); o Mermaid abaixo mostra a *topologia lógica*
+    (quem fala com quem, por qual barramento). A tabela mais abaixo
+    continua sendo o contrato canônico.
 
 ## Topologia por barramento
 

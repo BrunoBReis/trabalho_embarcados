@@ -16,8 +16,8 @@
    pulsos→velocidade do vento (documentando limitações).
 3. **Extras registrados** (pós-entrega, em ordem de valor):
    SF7/BW125 + teste de perda por `seq`; Telegraf + InfluxDB + Grafana;
-   WireViz para o diagrama de fiação; comentar a solução do
-   `set_min_output_buffer` no issue #55 do gr-lora_sdr.
+   comentar a solução do `set_min_output_buffer` no issue #55 do
+   gr-lora_sdr. *(WireViz: feito — ver [Conexões](conexoes.md).)*
 
 ## O plano completo (ao vivo, com as caixas reais)
 
