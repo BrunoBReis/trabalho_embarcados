@@ -38,12 +38,46 @@ docker compose exec mosquitto sh -c \
 Assinante recebeu a mensagem publicada — roteamento ok. Do host (com
 `pacman -S mosquitto`): `mosquitto_sub -h localhost -t 'estacao/#' -v`.
 
+## Passo 2 — Ponte SDR → MQTT (feito)
+
+O `receptor_lora.py` ganhou o bloco `PonteMqtt` (mensagens apenas, sem
+stream): assina a porta `msg` do `crc_verif`, valida o **CRC16
+fim-a-fim** da Fase 3 (réplica exata do `crc16.c`, selfcheck 0x29B1 no
+boot), desserializa os 18 B (`struct.unpack('<HhIBHHHBH')` — espelho do
+`pacote_t`) e publica JSON no `mosquitto` via paho-mqtt, pela rede
+interna do compose (hostname = nome do serviço).
+
+### Decisões documentadas
+
+- **Esquema de tópicos**: JSON único em `estacao/v1/dados` (o `v1`
+  espelha a versão do formato de fio). Tópicos por campo ficam para
+  quando o dashboard pedir — Telegraf/Node-RED consomem JSON nativamente.
+- **QoS 0 + retain**: perda de um pacote de telemetria não justifica
+  handshake (o próximo chega em 10 s); QoS 1 faria sentido para
+  comandos/alarmes. O retain entrega o último estado a assinante novo.
+- **Quem decide validade é o CRC16 da aplicação**, não o CRC do rádio:
+  o `crc_verif` publica mesmo com CRC PHY inválido, e a ponte descarta
+  (com contador) o que não fechar — pacote corrompido vira estatística.
+
+### A pegadinha do payload binário no PMT
+
+O `crc_verif` publica o payload como *símbolo* PMT (string C++); a
+conversão direta para `str` em Python assume UTF-8 e corromperia bytes
+altos. Solução: `pmt.serialize_str()` devolve o formato de fio intacto
+(`0x02` + tamanho u16 BE + bytes crus — confirmado empiricamente) e a
+ponte extrai dali.
+
+### Validação (sem bancada!)
+
+Os dois pacotes reais capturados pelo rádio na Fase 4 foram
+reinjetados na ponte como símbolos PMT genuínos (`pmt.deserialize_str`)
+dentro do container: CRC16 conferiu, campos decodificados (22,62 °C /
+906,1 hPa / 71 %), JSON publicado e lido de volta com `mosquitto_sub`
+(que conectou depois — retain comprovado). Caminho de descarte testado
+com payload de tamanho errado.
+
 ## Próximos passos
 
-1. Ponte SDR → MQTT: sair da impressão em stdout do `crc_verif` para a
-   porta de mensagens dele — um bloco Python no próprio
-   `receptor_lora.py` assina as PDUs, valida o CRC16 do pacote (o
-   fim-a-fim da Fase 3), desserializa os 18 B e publica via paho-mqtt
-   no serviço `mosquitto` (rede interna do compose).
-2. Definir e documentar o esquema de tópicos.
-3. QoS 0; discutir quando 1 faria sentido.
+1. Validação ao vivo: estação + dongle + `docker compose up` +
+   `mosquitto_sub -t 'estacao/#' -v` — o critério de aceitação da fase.
+2. Fase 6: persistência + dashboard em cima do broker.

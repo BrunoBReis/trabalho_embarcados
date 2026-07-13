@@ -184,10 +184,12 @@ serviço no docker-compose (decodificador SDR → publicador MQTT).
       anônimo de bancada, persistência em volume nomeado, log stdout)
 - [x] Validar broker com `mosquitto_pub`/`mosquitto_sub` (round-trip
       pub/sub em `estacao/#` dentro do container)
-- [ ] Ponte SDR → MQTT: serviço (Python + paho-mqtt) que recebe os
-      pacotes decodificados do `gr-lora_sdr`, valida CRC/seq e publica;
-      definir esquema de tópicos (`estacao/v1/...` — decidir e documentar)
-- [ ] QoS: começar com 0, entender quando 1 faria sentido
+- [x] Ponte SDR → MQTT: bloco `PonteMqtt` no receptor (porta de
+      mensagens do crc_verif → CRC16 fim-a-fim → JSON via paho-mqtt);
+      tópico único `estacao/v1/dados`; validada com pacotes reais da
+      Fase 4 reinjetados via PMT (falta só o ao-vivo, que é a aceitação)
+- [x] QoS 0 + retain (telemetria tolera perda; QoS 1 seria p/ comandos)
+      — decisão documentada em docs/09-mqtt.md
 - [ ] `docs/09-mqtt.md`
 
 **Aceitação:** `mosquitto_sub -t 'estacao/#' -v` no PC mostra os dados
