@@ -80,7 +80,7 @@ Wi-Fi); 1/3 são o UART0 do monitor.
 ## Cadeia de RF
 
 ```mermaid
-flowchart LR
+flowchart TD
     SX["Ra-02<br/>PA_BOOST +2 dBm"] --- IPEX["IPEX/u.FL"]
     IPEX --- PIG["pigtail<br/>(SMA macho)"]
     PIG --- BPF["BPF 433 MHz<br/>(SMA fêmea ×2 — faz de emenda)"]
