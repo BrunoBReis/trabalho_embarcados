@@ -3,6 +3,9 @@ site_description: >-
   Reprodução didática da Davis Vantage Pro2 — Fundamentos de Sistemas
   Embarcados (FGA/UnB)
 site_author: Bruno Bragança dos Reis
+site_url: https://brunobreis.github.io/trabalho_embarcados/
+repo_url: https://github.com/BrunoBReis/trabalho_embarcados
+repo_name: BrunoBReis/trabalho_embarcados
 
 docs_dir: docs
 

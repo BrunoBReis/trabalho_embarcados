@@ -1,0 +1,5 @@
+# Dependencias da DOCUMENTACAO (CI e uso local sem Docker).
+# Fixado na MESMA linha de versao da imagem usada localmente
+# (squidfunk/mkdocs-material:9.5, ver DOCS_IMAGE no Makefile) —
+# CI e maquina local devem gerar o mesmo site.
+mkdocs-material==9.5.*

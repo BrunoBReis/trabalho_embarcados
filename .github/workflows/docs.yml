@@ -1,0 +1,48 @@
+# CI da documentacao: builda o site MkDocs e publica no GitHub Pages
+# (branch gh-pages) a cada push que afete o conteudo do site.
+# Requisito unico (1x): Settings -> Pages -> Deploy from branch -> gh-pages.
+name: docs ci
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'PLANO.md'            # embutido no site via snippet (docs/plano.md)
+      - 'requirements.txt'
+      - '.github/workflows/docs.yml'
+
+permissions:
+  contents: write             # o gh-deploy faz push na branch gh-pages
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure Git Credentials
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      # Chave de cache que rotaciona por semana (recomendacao oficial
+      # do Material): acelera o pip sem congelar dependencias velhas.
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+
+      - uses: actions/cache@v4
+        with:
+          key: mkdocs-material-${{ env.cache_id }}
+          path: .cache
+          restore-keys: |
+            mkdocs-material-
+
+      - run: pip install -r requirements.txt
+
+      - run: mkdocs gh-deploy --force
