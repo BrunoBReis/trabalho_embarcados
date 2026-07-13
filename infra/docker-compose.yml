@@ -1,6 +1,17 @@
-# Infra do gateway no PC. Comeca com o receptor SDR; Mosquitto e o
-# resto do pipeline entram na Fase 5.
+# Infra do gateway no PC: receptor SDR (Fase 4) + broker MQTT (Fase 5).
+# Proximas pecas: ponte SDR->MQTT, banco e dashboard (Fase 6).
 services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20   # pin de versao = build reprodutivel
+    container_name: mosquitto
+    ports:
+      - "1883:1883"                   # exposto no host p/ mosquitto_sub/pub
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+    restart: unless-stopped
+
+
   sdr-receptor:
     build: ./sdr
     container_name: sdr-receptor
@@ -17,3 +28,6 @@ services:
       SDR_RATE: "250000"
       SDR_GAIN: "30"
       LORA_FORMATO: "hex"  # pacote binario de 18 B; "ascii" p/ testes com texto
+
+volumes:
+  mosquitto-data:
