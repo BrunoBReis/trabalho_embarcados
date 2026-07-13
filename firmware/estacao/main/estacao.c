@@ -122,14 +122,29 @@ void app_main(void) {
 
 #if CONFIG_ESTACAO_MODO_ESTACAO
 
+#include "lora.h"
+
 // Firmware da estacao: a cada intervalo, le todos os sensores, monta o
-// pacote binario (formato de common/pacote) e o imprime legivel + hex.
-// Falha de sensor vira bit em flags e campo zerado — o loop nunca para.
+// pacote binario (formato de common/pacote), imprime legivel + hex e o
+// TRANSMITE por LoRa. Falha de sensor vira bit em flags e campo zerado;
+// radio ausente nao derruba o loop (fica so o log + LED de falha).
 void app_main(void) {
   i2c_master_bus_handle_t bus = iniciar_barramento_i2c();
   int falhas_boot = autoteste(bus);
   if (falhas_boot > 0) {
     ESP_LOGW(TAG, "iniciando com %d componente(s) em falha", falhas_boot);
+  }
+
+  bool lora_ok = false;
+  if (lora_init() == ESP_OK) {
+    uint8_t versao = 0;
+    if (lora_ler_reg(LORA_REG_VERSION, &versao) == ESP_OK && versao == 0x12) {
+      ESP_ERROR_CHECK(lora_config_modem());
+      lora_ok = true;
+    }
+  }
+  if (!selftest("lora", lora_ok ? ESP_OK : ESP_ERR_TIMEOUT)) {
+    ESP_LOGE(TAG, "radio mudo: pacotes ficarao so no log serial");
   }
 
   static pacote_t pacote = {0};
@@ -188,8 +203,21 @@ void app_main(void) {
              pacote.chuva_raw, pacote.vento_ppm, pacote.flags, pacote.crc16);
     ESP_LOG_BUFFER_HEX(TAG, &pacote, sizeof(pacote));
 
-    led_status_definir(pacote.flags == 0 ? LED_STATUS_OK
-                                         : LED_STATUS_ERRO_SENSOR);
+    bool tx_falhou = false;
+    if (lora_ok) {
+      uint32_t ms = 0;
+      if (lora_tx((const uint8_t *)&pacote, sizeof(pacote), &ms) == ESP_OK) {
+        ESP_LOGI(TAG, "LoRa TX ok: %u bytes, %lu ms no ar",
+                 (unsigned)sizeof(pacote), (unsigned long)ms);
+      } else {
+        tx_falhou = true;
+        ESP_LOGE(TAG, "LoRa TX falhou");
+      }
+    }
+
+    led_status_definir((!lora_ok || tx_falhou) ? LED_STATUS_FALHA
+                       : pacote.flags == 0     ? LED_STATUS_OK
+                                               : LED_STATUS_ERRO_SENSOR);
   }
 }
 

@@ -16,4 +16,4 @@ services:
       LORA_CR: "1"         # 4/5
       SDR_RATE: "250000"
       SDR_GAIN: "30"
-      LORA_FORMATO: "ascii"  # trocar p/ "hex" quando o payload for o pacote binario
+      LORA_FORMATO: "hex"  # pacote binario de 18 B; "ascii" p/ testes com texto
