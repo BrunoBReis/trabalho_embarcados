@@ -205,20 +205,30 @@ diagnóstico da estação, se sobrar tempo.
 
 ---
 
-## Fase 6 — Dashboard e persistência
+## Fase 6 — Dashboard (simplificado)
 
-**Objetivo:** visualização histórica; fechar o pipeline.
+**Objetivo:** visualização ao vivo; fechar o pipeline.
 
-- [ ] Ampliar o docker-compose: Mosquitto + InfluxDB + Telegraf (consumer
-      MQTT) + Grafana — ou Node-RED como alternativa mais simples;
-      discutir o trade-off e escolher
-- [ ] Dashboard com séries de temperatura, umidade, pressão, luz, chuva
-      e vento
-- [ ] Retenção de dados e restart automático dos containers
-- [ ] `docs/10-dashboard.md`
+**Replanejada (12/07/2026):** o foco é o embarcado, já funcional ponta
+a ponta. Trade-off discutido (Telegraf+InfluxDB+Grafana × Node-RED ×
+página estática): a stack completa vira melhoria futura; a entrega usa
+o browser como assinante MQTT direto (Mosquitto fala WebSocket) — zero
+backend novo. Ver `docs/10-dashboard.md`.
 
-**Aceitação:** derrubar e subir a infra com um comando
-(`docker compose up -d`) e ver o histórico sobrevivendo a restart.
+- [x] Listener WebSocket (9001) no Mosquitto
+- [x] `infra/web/index.html`: cards + flags de sensor + log dos últimos
+      pacotes; mqtt.js vendorizado (demo sem internet); retain entrega
+      o último pacote na abertura da página
+- [x] Serviço `dashboard` (nginx alpine, porta 8080) no compose;
+      `restart: unless-stopped` em broker e dashboard
+- [x] Validação sem browser: assinante paho via WebSocket recebeu o
+      pacote retido (seq 58, com a estação ao vivo)
+- [ ] Validar no browser (http://localhost:8080) com a estação no ar
+- [x] `docs/10-dashboard.md`
+- [ ] *(futuro)* Telegraf + InfluxDB + Grafana p/ histórico persistente
+
+**Aceitação (simplificada):** `docker compose up -d` sobe tudo com um
+comando e a página mostra os cards atualizando a cada pacote da estação.
 
 **Aprender:** séries temporais, pipeline pub/sub → banco → visualização,
 redes entre containers, volumes persistentes.
