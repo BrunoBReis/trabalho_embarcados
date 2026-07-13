@@ -1,0 +1,64 @@
+site_name: Estação Meteorológica IoT — ESP32 + LoRa
+site_description: >-
+  Reprodução didática da Davis Vantage Pro2 — Fundamentos de Sistemas
+  Embarcados (FGA/UnB)
+site_author: Bruno Bragança dos Reis
+
+docs_dir: docs
+
+theme:
+  name: material
+  language: pt-BR
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue grey
+      toggle:
+        icon: material/weather-night
+        name: Modo claro
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue grey
+      toggle:
+        icon: material/weather-sunny
+        name: Modo escuro
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.snippets          # inclui arquivos de fora do docs/ (PLANO.md)
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Início: index.md
+  - Arquitetura: arquitetura.md
+  - Conexões do hardware: conexoes.md
+  - Plano e próximos passos: plano.md
+  - Diário de bordo:
+      - "00 — Ambiente": 00-ambiente.md
+      - "01 — BMP280 (I²C)": 01-bmp280.md
+      - "02 — LDR (ADC)": 02-ldr.md
+      - "03 — Chuva (MH-RD)": 03-chuva.md
+      - "04 — DHT11": 04-dht11.md
+      - "05 — Vento (reed)": 05-vento.md
+      - "06 — LED RGB (LEDC)": 06-led-rgb.md
+      - "07 — Integração": 07-integracao.md
+      - "08 — LoRa + SDR": 08-lora.md
+      - "09 — MQTT": 09-mqtt.md
+      - "10 — Dashboard": 10-dashboard.md
+  - Pinagem (justificativas): pinagem.md

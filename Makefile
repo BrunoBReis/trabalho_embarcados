@@ -28,13 +28,16 @@ COMPOSE = docker compose
 # A infra do gateway (broker, receptor SDR, dashboard) tem compose
 # proprio; o -f define tambem o diretorio-base dos caminhos relativos.
 COMPOSE_INFRA = $(COMPOSE) -f infra/docker-compose.yml
+
+# Documentacao (MkDocs Material em container; pin de versao).
+DOCS_IMAGE = squidfunk/mkdocs-material:9.5
 # Tarefas efêmeras: cada comando cria um container e o destrói no final.
 RUN     = $(COMPOSE) run --rm $(TTYFLAG) toolchain
 # Variante com a porta serial — apenas flash/monitor/erase precisam da
 # placa conectada; o build nunca deve depender dela.
 RUN_DEV = $(COMPOSE) run --rm $(TTYFLAG) dev
 
-.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada infra-up infra-down infra-logs infra-build mqtt-sub
+.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada infra-up infra-down infra-logs infra-build mqtt-sub docs-serve docs-build
 
 help:
 	@printf 'Targets disponíveis:\n'
@@ -56,6 +59,9 @@ help:
 	@printf '  make infra-logs     Segue os logs de todos os serviços (sair: Ctrl+C)\n'
 	@printf '  make infra-build    (Re)constrói as imagens da infra\n'
 	@printf '  make mqtt-sub       Mostra os dados chegando no broker (sair: Ctrl+C)\n'
+	@printf '\nDocumentação (MkDocs Material em container):\n'
+	@printf '  make docs-serve     Serve em http://localhost:8000 com live reload\n'
+	@printf '  make docs-build     Gera o site estático em site/\n'
 	@printf '\nVariáveis (sobrescrever na chamada ou no .env):\n'
 	@printf '  PROJ=%s\n' '$(PROJ)'
 	@printf '  PORT=%s\n' '$(PORT)'
@@ -109,6 +115,13 @@ infra-build:
 # não exige mosquitto-clients instalado no host.
 mqtt-sub:
 	$(COMPOSE_INFRA) exec mosquitto mosquitto_sub -t 'estacao/#' -v
+
+docs-serve:
+	docker run --rm $(shell test -t 0 && echo -it) -p 8000:8000 \
+		-v $(CURDIR):/docs $(DOCS_IMAGE)
+
+docs-build:
+	docker run --rm -v $(CURDIR):/docs $(DOCS_IMAGE) build
 
 # Requer o firmware gravado com o teste "todos (modo bancada)".
 test-bancada:

@@ -244,6 +244,9 @@ redes entre containers, volumes persistentes.
 - [ ] Teste de alcance LoRa fora da bancada (distâncias e RSSI numa tabela)
 - [ ] CI no GitHub Actions: job que builda os dois firmwares com a mesma
       imagem Docker do desenvolvimento (DevOps: build reprodutível)
+- [x] Documentação publicável: MkDocs Material em container
+      (`make docs-serve`/`docs-build`), com arquitetura e conexões em
+      Mermaid, diário completo e PLANO.md incluído ao vivo via snippet
 - [ ] Revisão final da documentação em `docs/` + atualização do README
       da disciplina com resultados
 

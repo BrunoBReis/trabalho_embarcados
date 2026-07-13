@@ -13,3 +13,6 @@ firmware/*/sdkconfig.old
 # Componentes baixados pelo gerenciador do IDF (regenerados no build).
 # O dependencies.lock fica VERSIONADO (reprodutibilidade, como package-lock).
 firmware/*/managed_components/
+
+# Site gerado pelo MkDocs (make docs-build)
+site/
