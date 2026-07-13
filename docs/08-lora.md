@@ -64,32 +64,56 @@ DIO1–DIO5 ficam desconectados.
    Tabela de leitura: `0x12` ok; `0xFF` = rádio energizado mas
    MISO/NSS abertos; `0x00` = alimentação do rádio caindo (chip apagado
    afunda a linha pelos diodos de proteção). Ficou permanente no driver.
-3. **Pendência (bloqueia o TX)**: pigtail IPEX→SMA e antena são ambos
-   SMA macho; falta adaptador fêmea-fêmea. Candidatos: o BPF (se for da
-   banda de 433 MHz — conferir a serigrafia; SAW aguenta pouca potência,
-   então TX no mínimo +2 dBm) ou adaptador do laboratório. Conferir
-   também se os conectores não são RP-SMA (miolo: pino vs furo).
-   **Regra: nenhum código de TX antes de antena resolvida.**
+3. **A novela dos conectores** (resolvida): a suspeita de RP-SMA no
+   pigtail veio de uma leitura errada do miolo. Inventário final:
+   pigtail SMA **macho** (pino), antena SMA **macho** (pino), BPF SMA
+   **fêmea** dos dois lados. Como os dois machos não se emendam, o BPF
+   (sem serigrafia, banda desconhecida) virou o "adaptador" candidato —
+   e a cadeia `Ra-02 → pigtail → BPF → antena` ficou pino-no-encaixe
+   nas duas junções. Lição: rosca engatada não prova contato; o miolo
+   (pino vs furo) é que decide, e RP-SMA existe para confundir.
+4. **Potência mínima como política de bancada**: +2 dBm fixo no código.
+   Torna inofensivo transmitir mesmo com a cadeia de antena incerta
+   (a regra "nada de TX sem antena" protege o PA em potência alta) e
+   transformou o próprio TX no instrumento de medida do BPF.
+
+## TX validado no SDR (marco da fase)
+
+Segundo passo do driver: `lora_config_modem()` + `lora_tx()`.
+
+- Modem: **433,0 MHz** (`RegFrf = 0x6C4000`; longe dos controles de
+  portão em 433,92), **SF12** didático (símbolo de 32,8 ms), BW 125 kHz,
+  CR 4/5, CRC on, LowDataRateOptimize (obrigatório com símbolo > 16 ms),
+  **PA_BOOST a +2 dBm** (única saída ligada à antena no Ra-02).
+- TX: payload na FIFO (`FifoTxBase`/`FifoAddrPtr`), `PayloadLength`,
+  modo TX e **polling do bit TxDone** em `RegIrqFlags` (o DIO0 fica
+  para o próximo passo — uma coisa nova por vez). Payload "chirp #N" a
+  cada 5 s; TxDone medido em ~990 ms, batendo com a fórmula de tempo
+  no ar do datasheet para SF12.
+- Validação no gqrx (RTL-SDR v3 + antena; `rtl_test` ok de primeira):
+  faixas de **125 kHz de largura**, centradas em **433,000 MHz**,
+  durando **~1 s**, repetindo a **cada 5 s** — os 4 criterios
+  (largura, frequência, duração, periodicidade) fechados.
+- Bônus: o sinal atravessou o BPF com força ⇒ **o BPF passa 433 MHz**,
+  aprovado como emenda definitiva entre pigtail e antena.
 
 ## Como validar
 
 ```
-make menuconfig   # Estacao - teste de bancada -> LoRa Ra-02
+make menuconfig   # Estacao - teste de bancada -> LoRa Ra-02 (bring-up ou TX)
 make run
 ```
 
-Esperado, estável por minutos: `RegVersion=0x12 — SX1278 respondendo`.
+Bring-up: `RegVersion=0x12` estável por minutos. TX: `TxDone em ~990 ms`
+a cada 5 s + as faixas no waterfall do gqrx em 433,0 MHz.
 
 ## Próximos passos
 
-1. Resolver antena (adaptador ou BPF 433 MHz) — TX no mínimo (+2 dBm).
-2. Configurar o modem: 433,0 MHz (longe dos controles de portão em
-   433,92), SF12/BW125 "didático" (símbolo de 32,8 ms — chirps visíveis
-   a olho nu no waterfall; pacote de 18 B ≈ 1,3 s no ar).
-3. TX com TxDone via DIO0; validar no gqrx pelos 4 critérios: instante
-   (bate com o log serial), frequência central, largura (125 kHz) e
-   "obediência" (mudar freq/BW/SF no firmware e ver o sinal acompanhar).
-4. `gr-lora_sdr` para decodificar; depois voltar a SF7/BW125.
+1. `gr-lora_sdr` (Docker) para decodificar o payload no PC — o item de
+   maior risco do replanejamento; validar antes de qualquer outra coisa.
+2. Payload real: substituir o texto pelo pacote de 18 B da Fase 3
+   (CRC16 + seq); validar no decodificador.
+3. Voltar para SF7/BW125 (o enlace de produção) e medir perda via seq.
 
 Referências: Semtech **AN1200.22** (LoRa Modulation Basics), datasheet
 SX1276/77/78/79 cap. 4.1, calculadora de airtime do TTN.

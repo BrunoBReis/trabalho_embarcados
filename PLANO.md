@@ -135,13 +135,14 @@ do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
 - [x] Driver SPI próprio (`main/lora.c`): VSPI @ 1 MHz, reset via RST,
       leitura de registradores; **RegVersion 0x42 → 0x12 validado**
       (pegadinha encontrada: MOSI em furo vazio da protoboard)
-- [ ] ⚠️ Antena do Ra-02: resolver adaptador SMA fêmea-fêmea (pigtail e
-      antena são ambos macho; candidato: BPF se for de 433 MHz, ou
-      adaptador do laboratório). **Nenhum código de TX antes disso.**
-- [ ] Configurar o modem: 433,0 MHz, SF12/BW125 didático, potência
-      mínima (+2 dBm na bancada); TX com TxDone via DIO0
-- [ ] Validar o chirp no waterfall (gqrx): instante, freq, largura e
-      "obediência" aos parâmetros
+- [x] ⚠️ Antena do Ra-02: cadeia `pigtail → BPF → antena` (pino no
+      encaixe nas duas junções); o BPF sem serigrafia foi aprovado
+      empiricamente — o chirp atravessa forte, logo passa 433 MHz
+- [x] Configurar o modem: 433,0 MHz, SF12/BW125 didático, potência
+      mínima (+2 dBm na bancada, fixa no código); TX com TxDone por
+      polling (DIO0 fica para o RX)
+- [x] Validar o chirp no waterfall (gqrx): faixas de 125 kHz em
+      433,000 MHz, ~1 s de duração, a cada 5 s — 4 critérios fechados
 - [ ] `gr-lora_sdr` (Docker) decodificando; payload = pacote da Fase 3;
       validar CRC e seq no PC; depois voltar a SF7/BW125
 - [ ] Teste de perda: afastar estação do SDR, observar seq pulando
