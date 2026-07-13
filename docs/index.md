@@ -7,7 +7,7 @@ recebe via **RTL-SDR + GNU Radio em Docker**, publica em **MQTT** e
 exibe num **dashboard** no browser.
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph estacao["🌡️ Estação (ESP32 — nó externo)"]
         SENS["Sensores<br/>BMP280 · DHT11 · LDR<br/>MH-RD · reed switch"] --> MCU["ESP32<br/>firmware/estacao"]
         MCU --> RA["Ra-02 SX1278<br/>LoRa TX"]
