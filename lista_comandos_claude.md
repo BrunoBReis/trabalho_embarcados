@@ -112,3 +112,156 @@ Modulo Wcmcu: anodo comum (silkscreen '-' mentiroso -> comum no 3V3,
        if line and 'estacao:' in line: print(line)
    " 2>&1 | tail -4`
 - `   sed -i 's/^CONFIG_ESTACAO_TESTE_LDR=y$/# CONFIG_ESTACAO_TESTE_LDR is not set/; s/^# CONFIG_ESTACAO_TESTE_TODOS is not set$/# CONFIG_ESTACAO_TESTE_TODOS is not set\nCONFIG_ESTACAO_TESTE_BMP280=y/' firmware/estacao/sdkconfig && grep -n "ESTACAO_" firmware/estacao/sdkconfig`
+- `   sed -i 's/^CONFIG_ESTACAO_TESTE_BMP280=y$/# CONFIG_ESTACAO_TESTE_BMP280 is not set/; s/^# CONFIG_ESTACAO_TESTE_LED is not set$/# CONFIG_ESTACAO_TESTE_LED is not set\nCONFIG_ESTACAO_TESTE_LORA=y/' firmware/estacao/sdkconfig && grep -n "ESTACAO_TESTE\|ESTACAO_MODO" firmware/estacao/sdkconfig`
+- `   sed -i 's/^CONFIG_ESTACAO_MODO_ESTACAO=y$/# CONFIG_ESTACAO_MODO_ESTACAO is not set/' firmware/estacao/sdkconfig && sed -n '393,405p' firmware/estacao/sdkconfig && make build 2>&1 | tail -6`
+- `   git ls-remote https://github.com/tapparelj/gr-lora_sdr.git HEAD`
+- `   docker compose -f /home/brunobreis/Projects/embarcados/trabalho_final/infra/docker-compose.yml build sdr-receptor 2>&1 | tail -40`
+- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   import gnuradio.lora_sdr as lora_sdr
+   import osmosdr
+   fs = lora_sdr.frame_sync(433000000, 125000, 12, False, [0x12], 2, 8)
+   fft = lora_sdr.fft_demod(True, True)
+   g = lora_sdr.gray_mapping(True)
+   d = lora_sdr.deinterleaver(True)
+   h = lora_sdr.hamming_dec(True)
+   hd = lora_sdr.header_decoder(False, 1, 255, True, 1, True)
+   dw = lora_sdr.dewhitening()
+   crc = lora_sdr.crc_verif(1, False)
+   print('todos os blocos instanciados OK (SF12, os=2, sync 0x12, LDRO on)')
+   " 2>&1 | tail -5`
+- `   docker compose build sdr-receptor 2>&1 | tail -2 && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   from gnuradio import blocks, gr
+   c = blocks.copy(gr.sizeof_gr_complex)
+   c.set_min_output_buffer(int(4096*2*4))
+   print('copy block + buffer de', 4096*2*4, 'itens OK')
+   " 2>&1 | tail -2`
+- `   docker compose run --rm --no-deps --entrypoint bash sdr-receptor -c "find /usr -name 'lora_sdr' -maxdepth 6 -type d 2>/dev/null; python3 -c 'import sys; print([p for p in sys.path if \"packages\" in p])'" 2>&1 | tail -4`
+- `   docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   from gnuradio import gr, blocks
+   import gnuradio.lora_sdr as lora_sdr
+   import time
+class TB(gr.top_block):
+       def __init__(self):
+           super().__init__()
+           src = blocks.null_source(gr.sizeof_gr_complex)
+           cp = blocks.copy(gr.sizeof_gr_complex)
+           cp.set_min_output_buffer(32768)
+           fs = lora_sdr.frame_sync(433000000,125000,12,False,[0x12],2,8)
+           snk = blocks.null_sink(gr.sizeof_gr_complex)
+           self.connect(src, cp, fs, snk)
+tb = TB()
+   tb.start()
+   time.sleep(2)
+   tb.stop(); tb.wait()
+   print('fim do experimento')
+   " 2>&1 | grep -v "^Using\|CPU Features" | tail -6`
+- ` docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   from gnuradio import gr, blocks, filter as gr_filter
+   from gnuradio.filter import firdes
+   import gnuradio.lora_sdr as lora_sdr
+   import time, sys def roda(nome, montar):
+       class TB(gr.top_block):
+           def __init__(self):
+               super().__init__()
+               montar(self)
+       tb = TB()
+       tb.start(); time.sleep(2); tb.stop(); tb.wait()
+       print(f'--- fim: {nome}', flush=True) # A: min_output_buffer com 2 argumentos (porta, tamanho) em todos os blocos
+   def cen_a(tb):
+       src = blocks.null_source(gr.sizeof_gr_complex)
+       cp = blocks.copy(gr.sizeof_gr_complex)
+       for b in (src, cp):
+           b.set_min_output_buffer(0, 65536)
+       fs = lora_sdr.frame_sync(433000000,125000,12,False,[0x12],2,8)
+       tb.connect(src, cp, fs, blocks.null_sink(gr.sizeof_gr_complex)) # B: decimador FIR /2 -> frame_sync com os_factor=1 (sem buffer especial)
+   def cen_b(tb):
+       src = blocks.null_source(gr.sizeof_gr_complex)
+       taps = firdes.low_pass(1.0, 250e3, 62.5e3, 25e3)
+       dec = gr_filter.fir_filter_ccf(2, taps)
+       fs = lora_sdr.frame_sync(433000000,125000,12,False,[0x12],1,8)
+       tb.connect(src, dec, fs, blocks.null_sink(gr.sizeof_gr_complex))
+       print(f'(taps do filtro: {len(taps)})', flush=True)
+roda('A (min_output_buffer porta 0)', cen_a)
+   roda('B (decimador, os=1)', cen_b)
+   " 2>&1 | grep -vE "^Using|CPU Features|Creating|Created|vmcircbuf" | tail -8`
+- `   docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   from gnuradio import gr, blocks
+   import gnuradio.lora_sdr as lora_sdr
+   import time
+   def roda(nome, tam, dois_args, tambem_src):
+       class TB(gr.top_block):
+           def __init__(self):
+               super().__init__()
+               src = blocks.null_source(gr.sizeof_gr_complex)
+               cp = blocks.copy(gr.sizeof_gr_complex)
+               alvos = (src, cp) if tambem_src else (cp,)
+               for b in alvos:
+                   if dois_args: b.set_min_output_buffer(0, tam)
+                   else: b.set_min_output_buffer(tam)
+               fs = lora_sdr.frame_sync(433000000,125000,12,False,[0x12],2,8)
+               self.connect(src, cp, fs, blocks.null_sink(gr.sizeof_gr_complex))
+       tb = TB(); tb.start(); time.sleep(1.5); tb.stop(); tb.wait()
+       print(f'--- fim: {nome}', flush=True)
+   roda('1arg 32768 so copy (reproducao)', 32768, False, False)
+   roda('1arg 65536 so copy', 65536, False, False)
+   roda('2args 32768 so copy', 32768, True, False)
+   " 2>&1 | grep -E "fim:|block_executor"`
+- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose up -d mosquitto 2>&1 | tail -2 && docker compose exec mosquitto sh -c "
+   mosquitto_sub -h localhost -t 'estacao/#' -C 1 -W 10 > /tmp/recebido &
+   sleep 1
+   mosquitto_pub -h localhost -t 'estacao/v1/teste' -m 'ola do broker da fase 5'
+   wait
+   echo \"assinante recebeu: \$(cat /tmp/recebido)\"
+   " && docker compose logs mosquitto 2>&1 | tail -3`
+- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose build sdr-receptor 2>&1 | tail -2 && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   import pmt, struct # 1) formato de fio do PMT p/ simbolos (descoberta empirica) bruto = bytes(pmt.serialize_str(pmt.intern('abc')))
+   print('serializacao de symbol \"abc\":', bruto.hex())
+import receptor_lora as r # 2) selfcheck do CRC + extracao de payload de um simbolo ascii assert r.crc16_ccitt(b'123456789') == 0x29B1
+   assert r.payload_de_pmt(pmt.intern('chirp #96')) == b'chirp #96'
+   print('crc16 selfcheck + payload_de_pmt: OK') # 3) dois pacotes REAIS capturados pelo radio ontem p1 = bytes.fromhex('0300d608ef61010047d505ff0f0000000caf')
+   p2 = bytes.fromhex('0400d408f261010047ba0aff0f000000f8ef')
+   for p in (p1, p2):
+       print('pacote real decodificado:', r.desserializar(p))
+   " 2>&1 | grep -vE "^Using|CPU Features|Creating|Created" | tail -6`
+- `   docker compose run --rm --entrypoint python3 sdr-receptor -c "
+   import pmt, struct, time
+   import receptor_lora as r # simbolo PMT binario genuino, reconstruido pelo formato de fio
+   p2 = bytes.fromhex('0400d408f261010047ba0aff0f000000f8ef')
+   msg = pmt.deserialize_str(bytes([0x02]) + struct.pack('>H', len(p2)) + p2)
+cliente = r.criar_cliente_mqtt()
+   time.sleep(1)  # conexao assincrona
+   ponte = r.PonteMqtt(cliente)
+   ponte.tratar(msg)                      # caminho feliz -> publica
+   ponte.tratar(pmt.intern('chirp #96'))  # tamanho errado -> descarta
+   time.sleep(1)
+   cliente.loop_stop()
+   " 2>&1 | grep -E "ponte" ; echo "--- o que ficou retido no broker:" && docker compose exec mosquitto mosquitto_sub -t 'estacao/v1/dados' -C 1 -W 5 -v`
+- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose up -d mosquitto dashboard 2>&1 | tail -3 && echo "--- pagina servida:" && curl -s http://localhost:8080/ | head -c 120 && echo && curl -s -o /dev/null -w "mqtt.min.js: HTTP %{http_code}, %{size_download} bytes\n" http://localhost:8080/mqtt.min.js && echo "--- teste do listener websocket (assinante paho via ws):" && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   import paho.mqtt.client as mqtt, json, time
+   recebido = []
+   def on_msg(c, u, m): recebido.append(m.payload.decode())
+   try:
+       c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, transport='websockets')
+   except AttributeError:
+       c = mqtt.Client(transport='websockets')
+   c.on_message = on_msg
+   c.connect('mosquitto', 9001, 30)
+   c.subscribe('estacao/v1/dados')
+   c.loop_start(); time.sleep(2); c.loop_stop()
+   print('retido via websocket:', recebido[0][:80] if recebido else 'NADA')
+   " 2>&1 | tail -1`
+- `   docker ps --format '{{.Names}}\t{{.Status}}\t{{.Ports}}' && echo --- && docker compose logs dashboard 2>&1 | tail -3 && echo --- && docker compose exec dashboard wget -qO- http://localhost:80/ 2>&1 | head -c 150 && echo && curl -s http://127.0.0.1:8080/ 2>&1 | head -c 100; echo "curl exit: $?"`
+- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+   import paho.mqtt.client as mqtt, time
+   recebido = []
+   def on_msg(c, u, m): recebido.append(m.payload.decode())
+   try:
+       c = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, transport='websockets')
+   except AttributeError:
+       c = mqtt.Client(transport='websockets')
+   c.on_message = on_msg
+   c.connect('mosquitto', 9001, 30)
+   c.subscribe('estacao/v1/dados')
+   c.loop_start(); time.sleep(2); c.loop_stop()
+   print('retido via websocket:', recebido[0][:90] if recebido else 'NADA')
+   " 2>&1 | tail -1`
