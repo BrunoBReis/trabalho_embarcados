@@ -91,8 +91,8 @@ flowchart TD
 
 Lição registrada no diário: *rosca engatada não prova contato* — o
 miolo (pino vs furo) decide, e RP-SMA existe para confundir
-([08 — LoRa](08-lora.md)).
+([08 — LoRa](diario_bordo/08-lora.md)).
 
 ## Mapa visual da placa
 
-![Mapa de pinagem do ESP32 na estação](mapa_pinagem_esp32_estacao.svg)
+![Mapa de pinagem do ESP32 na estação](assets/mapa_pinagem_esp32_estacao.svg)

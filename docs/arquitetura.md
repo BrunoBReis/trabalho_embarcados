@@ -6,7 +6,7 @@ Dois "mundos" ligados por rádio: o **nó externo** (ESP32, sem nenhuma
 infraestrutura além de alimentação) e o **gateway** (o PC, onde tudo é
 software em containers). A decisão de arquitetura mais importante do
 projeto está no meio: sem um segundo módulo LoRa, o receptor é um
-RTL-SDR com o PHY LoRa implementado em GNU Radio (`docs/08-lora.md`
+RTL-SDR com o PHY LoRa implementado em GNU Radio (`docs/diario_bordo/08-lora.md`
 conta essa história).
 
 ```mermaid
@@ -81,10 +81,10 @@ sequenceDiagram
 ## Decisões de arquitetura registradas
 
 1. **Gateway em software (SDR)** — sem segundo Ra-02; o PHY LoRa roda
-   em GNU Radio dentro de container ([08 — LoRa](08-lora.md)).
+   em GNU Radio dentro de container ([08 — LoRa](diario_bordo/08-lora.md)).
 2. **JSON único em `estacao/v1/dados`** — Telegraf/Grafana futuros
-   consomem sem mudar nada ([09 — MQTT](09-mqtt.md)).
+   consomem sem mudar nada ([09 — MQTT](diario_bordo/09-mqtt.md)).
 3. **Browser como cliente MQTT** — dashboard sem backend, via listener
-   WebSocket do Mosquitto ([10 — Dashboard](10-dashboard.md)).
+   WebSocket do Mosquitto ([10 — Dashboard](diario_bordo/10-dashboard.md)).
 4. **Reprodutibilidade** — toolchain, imagens e dependências fixadas
    por versão/commit; tudo sobe com `make`.

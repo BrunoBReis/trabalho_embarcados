@@ -8,8 +8,6 @@ Ciclo **build → flash → monitor** 100% dockerizado, com o projeto
 1. Makefile na raiz orquestrando o `idf.py` dentro da imagem
    `espressif/idf:release-v5.3` (versão fixada = build reprodutível).
 2. `.clangd` na raiz (removendo flags do GCC Xtensa que o clangd não conhece).
-   Atenção: o nome do arquivo é `.clangd`, **com ponto** — sem o ponto o
-   clangd não o encontra.
 3. Projeto criado com `idf.py create-project` dentro do container e alvo
    definido com `make set-target` (esp32).
 4. `app_main()` com `ESP_LOGI` + `vTaskDelay(pdMS_TO_TICKS(1000))`.
@@ -49,9 +47,9 @@ toolchain migrou para **`docker compose run --rm`** (`compose.yml` na raiz):
   e `dev` (com a serial — flash/monitor), unidos por âncora YAML.
 - `.env` (fora do git; ver `.env.example`) permite override por máquina
   (`PORT`, `IDF_VERSION`) sem tocar em arquivo versionado.
-- A infra de *serviços de verdade* (Mosquitto, InfluxDB, Grafana) terá o
+- A infra de *serviços de verdade* (Mosquitto e Dashboard) terá o
   próprio compose em `infra/` nas Fases 5–6 — lá com `up -d`, restart
-  policy e volumes, que é onde esse modo brilha.
+  policy e volumes.
 
 ## Ajustes feitos no Makefile durante a fase
 
@@ -66,17 +64,6 @@ toolchain migrou para **`docker compose run --rm`** (`compose.yml` na raiz):
   container, então damos um home gravável para caches.
 - **Alvo `erase-flash`**: apaga a flash inteira quando ela fica num estado
   estranho (NVS corrompida etc.).
-
-## Problemas encontrados
-
-- Arquivo de config do clangd estava salvo como `clangd` (sem ponto) —
-  invisível para o clangd. Renomeado.
-- Com `--user`, o git dentro do container avisa
-  `detected dubious ownership in repository at '/opt/esp/idf/components/openthread/openthread'`
-  (repositório de dono root lido por não-root). **Inofensivo**: o IDF só usa
-  isso para descobrir a versão do componente OpenThread, que não usamos, e o
-  build conclui com sucesso. Se um dia atrapalhar, a imagem aceita a variável
-  `IDF_GIT_SAFE_DIR` com os caminhos a liberar.
 
 ## Comandos usados
 
@@ -104,15 +91,3 @@ sudo usermod -aG uucp $USER   # exige logout/login para valer
 Observação: como o flash roda via Docker, ele funcionaria mesmo sem isso
 (o daemon do Docker tem acesso ao device), mas o grupo é o correto para
 acessar `/dev/ttyACM0` diretamente do host (ex.: picocom).
-
-## Como validar
-
-1. `make build` → termina com `Project build complete`.
-2. Placa conectada: `dmesg | tail` mostra o conversor USB-serial
-   (CP2102/CH340) e `ls -l /dev/ttyACM0` mostra grupo `uucp`.
-3. `make run` → monitor mostra `I (…) estacao: contador: N` subindo a cada
-   1 s (sair com Ctrl+]).
-4. LazyVim: abrir `firmware/estacao/main/estacao.c` (após um build),
-   autocomplete funciona e `gd` em `vTaskDelay` abre o header do FreeRTOS em
-   `/opt/esp/idf/...`. Se headers da libc não resolverem, usar
-   `--query-driver=/opt/esp/tools/**/xtensa-esp32-elf-gcc` (ver CLAUDE.md).
