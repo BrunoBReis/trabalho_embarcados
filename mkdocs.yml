@@ -51,17 +51,25 @@ nav:
   - Início: index.md
   - Arquitetura: arquitetura.md
   - Conexões do hardware: conexoes.md
+  - Componentes:
+      - "BMP280 — temperatura/pressão": componentes/BMP280.md
+      - "DHT11 — umidade": componentes/DHT11.md
+      - "LDR KY-018 — luminosidade": componentes/LDR.md
+      - "MH-RD + LM393 — chuva": componentes/pente_LM393.md
+      - "Reed switch — vento": componentes/reed.md
+      - "LED RGB — status": componentes/LED.md
+      - "LoRa Ra-02 — rádio": componentes/LoRa.md
   - Plano e próximos passos: plano.md
   - Diário de bordo:
-      - "00 — Ambiente": 00-ambiente.md
-      - "01 — BMP280 (I²C)": 01-bmp280.md
-      - "02 — LDR (ADC)": 02-ldr.md
-      - "03 — Chuva (MH-RD)": 03-chuva.md
-      - "04 — DHT11": 04-dht11.md
-      - "05 — Vento (reed)": 05-vento.md
-      - "06 — LED RGB (LEDC)": 06-led-rgb.md
-      - "07 — Integração": 07-integracao.md
-      - "08 — LoRa + SDR": 08-lora.md
-      - "09 — MQTT": 09-mqtt.md
-      - "10 — Dashboard": 10-dashboard.md
+      - "00 — Ambiente": diario_bordo/00-ambiente.md
+      - "01 — BMP280 (I²C)": diario_bordo/01-bmp280.md
+      - "02 — LDR (ADC)": diario_bordo/02-ldr.md
+      - "03 — Chuva (MH-RD)": diario_bordo/03-chuva.md
+      - "04 — DHT11": diario_bordo/04-dht11.md
+      - "05 — Vento (reed)": diario_bordo/05-vento.md
+      - "06 — LED RGB (LEDC)": diario_bordo/06-led-rgb.md
+      - "07 — Integração": diario_bordo/07-integracao.md
+      - "08 — LoRa + SDR": diario_bordo/08-lora.md
+      - "09 — MQTT": diario_bordo/09-mqtt.md
+      - "10 — Dashboard": diario_bordo/10-dashboard.md
   - Pinagem (justificativas): pinagem.md
