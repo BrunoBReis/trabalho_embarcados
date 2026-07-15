@@ -51,6 +51,8 @@ nav:
   - Início: index.md
   - Arquitetura: arquitetura.md
   - Conexões do hardware: conexoes.md
+  - Plano e próximos passos: plano.md
+  - Pinagem (justificativas): pinagem.md
   - Componentes:
       - "Visão geral": componentes/index.md
       - "BMP280 — temperatura/pressão": componentes/BMP280.md
@@ -60,8 +62,8 @@ nav:
       - "Reed switch — vento": componentes/reed.md
       - "LED RGB — status": componentes/LED.md
       - "LoRa Ra-02 — rádio": componentes/LoRa.md
-  - Plano e próximos passos: plano.md
   - Diário de bordo:
+      - "Visão geral": diario_bordo/index.md
       - "00 — Ambiente": diario_bordo/00-ambiente.md
       - "01 — BMP280 (I²C)": diario_bordo/01-bmp280.md
       - "02 — LDR (ADC)": diario_bordo/02-ldr.md
@@ -73,4 +75,3 @@ nav:
       - "08 — LoRa + SDR": diario_bordo/08-lora.md
       - "09 — MQTT": diario_bordo/09-mqtt.md
       - "10 — Dashboard": diario_bordo/10-dashboard.md
-  - Pinagem (justificativas): pinagem.md

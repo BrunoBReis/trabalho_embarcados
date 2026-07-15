@@ -41,6 +41,10 @@ make mqtt-sub     # vê os dados chegando no broker
 # dashboard: http://localhost:8080
 ```
 
+## Protoboard
+
+![Protoboard](./assets/protoboard.png)
+
 ## Esta documentação
 
 Servida com MkDocs Material em container, sem instalar nada no host:
@@ -54,5 +58,6 @@ make docs-build   # gera o site estático em site/
 - **[Conexões do hardware](conexoes.md)** — cada fio da protoboard
 - [**Componentes**](./componentes/index.md) - detalhamento dos componentes
 - **[Plano e próximos passos](plano.md)** — o roteiro por fases, ao vivo
-- **Diário de bordo** — a história real de cada etapa, com os problemas
-  e as soluções (a parte mais valiosa para quem quiser reproduzir)
+- **[Diário de bordo](diario_bordo/index.md)** — a história real de
+  cada etapa, com os problemas e as soluções (a parte mais valiosa para
+  quem quiser reproduzir)
