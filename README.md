@@ -1,5 +1,7 @@
 # Estação Meteorológica IoT com Enlace LoRa
 
+> Para documentação completa, basta acessar essa [LINK](https://brunobreis.github.io/trabalho_embarcados/)
+
 ### Estudo da Davis Vantage Pro2 e proposta de reprodução com ESP32
 
 **Fundamentos de Sistemas Embarcados (FSE) — FGA/UnB — 2026.1 — Trabalho 2**
