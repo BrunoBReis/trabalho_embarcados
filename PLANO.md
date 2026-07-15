@@ -23,7 +23,7 @@ documentar em `docs/`, commitar e marcar a caixa.
 - [x] `make lsp-setup` (uma vez, ~3 GB) e clangd funcionando no LazyVim
       (autocomplete e go-to-definition das APIs do IDF; o
       `compile_commands.json` é encontrado automaticamente no `build/`)
-- [x] Repositório git iniciado; primeiro commit; `docs/00-ambiente.md`
+- [x] Repositório git iniciado; primeiro commit; `docs/diario_bordo/00-ambiente.md`
 
 **Aceitação:** vejo o contador subindo no `make run`, e o
 LazyVim navega para definições do ESP-IDF.
@@ -48,10 +48,10 @@ Makefile (alvos, variáveis sobrescrevíveis, `.PHONY`, alvo padrão).
 - [x] Integrar leitura completa (calibração + compensação) — pode usar
       componente pronto, mas explicando o que ele faz
 - [x] Log periódico: temperatura (°C) e pressão (hPa) a cada 5 s
-- [x] `docs/01-bmp280.md`
+- [x] `docs/diario_bordo/01-bmp280.md`
 
-**Aceitação:** valores plausíveis para Brasília (~26 °C, ~890 hPa pela
-altitude de ~1100 m) no monitor serial.
+**Aceitação:** valores plausíveis para Brasília (\~26 °C, \~890 hPa pela
+altitude de \~1100 m) no monitor serial.
 
 **Aprender:** registradores, datasheet, diferença entre valor bruto e
 compensado, por que o BMP280 precisa de coeficientes de calibração.
@@ -69,7 +69,7 @@ Ordem (cada item = um mini-projeto de teste isolado + depois integração):
 - [x] **LDR no ADC** (GPIO 34): configurar ADC1 com atenuação de 12 dB,
       ler 0–4095, entender ruído e média de amostras
       **Obs (pendência de hardware)**: módulo KY-018 veio com o LDR
-      soldado em furos não conectados (ver docs/02-ldr.md); software
+      soldado em furos não conectados (ver docs/diario_bordo/02-ldr.md); software
       validado com jumper no 3V3 (leu 4095). Consertar módulo ou montar
       divisor com LDR avulso + resistor ~10 kΩ quando disponível.
 - [x] **MH-RD** (GPIO 35 AO, 27 DO): mesma base do ADC; comparar AO vs DO
@@ -83,7 +83,7 @@ Ordem (cada item = um mini-projeto de teste isolado + depois integração):
       **Obs**: módulo Wcmcu é anodo comum (silkscreen "-" enganoso, comum
       no 3V3, output_invert no LEDC) e sem resistores — teto de duty 25%.
       Comprar 3x 220–330 Ω junto com o 10 kΩ do LDR.
-- [x] `docs/02-...` a `docs/06-...` (um por sensor)
+- [x] `docs/diario_bordo/02-...` a `docs/diario_bordo/06-...` (um por sensor)
       **Extra**: autoteste [SELFTEST] + `tools/bancada.py` +
       `make test-bancada` (aprovado com os 6 componentes)
 
@@ -110,7 +110,7 @@ polling, debounce, PWM/LEDC, por que protocolos com timing crítico
 - [x] Flags de erro por sensor (falha de leitura não derruba o sistema)
       — validado ao vivo: DHT11 arrancado/replugado sem reboot
 - [x] LED RGB refletindo o estado real
-- [x] `docs/07-integracao.md` (**pendência**: anexar foto da protoboard)
+- [x] `docs/diario_bordo/07-integracao.md` (**pendência**: anexar foto da protoboard)
 
 **Aceitação:** monitor mostra o pacote completo, sensores falhos são
 marcados nas flags sem travar o loop. **Este é o marco "dados no formato
@@ -127,15 +127,15 @@ CRC, tolerância a falhas, por que payload binário em vez de JSON no rádio.
 
 **Replanejada (jul/2026):** só há UM Ra-02; os módulos FS1000A/MX-RM-5V
 são ASK/OOK e não falam LoRa. O receptor passa a ser o PC com RTL-SDR v3
-+ `gr-lora_sdr` (ver `docs/08-lora.md`). O segundo ESP32 sai do caminho
++ `gr-lora_sdr` (ver `docs/diario_bordo/08-lora.md`). O segundo ESP32 sai do caminho
 do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
 
-- [x] Decisão de arquitetura documentada (`docs/08-lora.md`)
+- [x] Decisão de arquitetura documentada (`docs/diario_bordo/08-lora.md`)
 - [x] Explicação: CSS/chirp, SF, BW, CR, tempo no ar (AN1200.22)
 - [x] Driver SPI próprio (`main/lora.c`): VSPI @ 1 MHz, reset via RST,
       leitura de registradores; **RegVersion 0x42 → 0x12 validado**
       (pegadinha encontrada: MOSI em furo vazio da protoboard)
-- [x] ⚠️ Antena do Ra-02: cadeia `pigtail → BPF → antena` (pino no
+- [x] Antena do Ra-02: cadeia `pigtail → BPF → antena` (pino no
       encaixe nas duas junções); o BPF sem serigrafia foi aprovado
       empiricamente — o chirp atravessa forte, logo passa 433 MHz
 - [x] Configurar o modem: 433,0 MHz, SF12/BW125 didático, potência
@@ -144,7 +144,7 @@ do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
 - [x] Validar o chirp no waterfall (gqrx): faixas de 125 kHz em
       433,000 MHz, ~1 s de duração, a cada 5 s — 4 critérios fechados
 - [x] `gr-lora_sdr` (Docker) decodificando no PC: "chirp #N" com header
-      e CRC válidos, seq contínua (batalhas do debug em docs/08-lora.md:
+      e CRC válidos, seq contínua (batalhas do debug em docs/diario_bordo/08-lora.md:
       GR_PYTHON_DIR no 24.04, buffer do SF12 e a forma de 2 argumentos
       do set_min_output_buffer que o issue #55 nunca descobriu)
 - [x] Payload = pacote de 18 B da Fase 3 transmitido pelo modo estação
@@ -158,7 +158,7 @@ do rádio. Risco maior do plano: a decodificação via SDR — validar cedo.
       SDR, observar seq pulando (decisão de 12/07/2026: MQTT e
       dashboard primeiro — pipeline completo vale mais que enlace
       otimizado)
-- [ ] `docs/08-lora.md` completo
+- [ ] `docs/diario_bordo/08-lora.md` completo
 
 **Aceitação:** PC recebe o pacote real da estação via SDR, valida CRC,
 imprime os campos decodificados e detecta pacotes perdidos.
@@ -189,10 +189,10 @@ serviço no docker-compose (decodificador SDR → publicador MQTT).
       tópico único `estacao/v1/dados`; validada com pacotes reais da
       Fase 4 reinjetados via PMT e depois AO VIVO na bancada (12/07)
 - [x] QoS 0 + retain (telemetria tolera perda; QoS 1 seria p/ comandos)
-      — decisão documentada em docs/09-mqtt.md
-- [x] `docs/09-mqtt.md`
+      — decisão documentada em docs/diario_bordo/09-mqtt.md
+- [x] `docs/diario_bordo/09-mqtt.md`
 
-**Aceitação:** ✅ (12/07/2026) `mosquitto_sub -t 'estacao/#' -v` no PC
+**Aceitação:** (12/07/2026) `mosquitto_sub -t 'estacao/#' -v` no PC
 mostra os dados da estação chegando pelo caminho completo
 sensor → LoRa → SDR → broker.
 
@@ -213,7 +213,7 @@ diagnóstico da estação, se sobrar tempo.
 a ponta. Trade-off discutido (Telegraf+InfluxDB+Grafana × Node-RED ×
 página estática): a stack completa vira melhoria futura; a entrega usa
 o browser como assinante MQTT direto (Mosquitto fala WebSocket) — zero
-backend novo. Ver `docs/10-dashboard.md`.
+backend novo. Ver `docs/diario_bordo/10-dashboard.md`.
 
 - [x] Listener WebSocket (9001) no Mosquitto
 - [x] `infra/web/index.html`: cards + flags de sensor + log dos últimos
@@ -224,7 +224,7 @@ backend novo. Ver `docs/10-dashboard.md`.
 - [x] Validação sem browser: assinante paho via WebSocket recebeu o
       pacote retido (seq 58, com a estação ao vivo)
 - [ ] Validar no browser (http://localhost:8080) com a estação no ar
-- [x] `docs/10-dashboard.md`
+- [x] `docs/diario_bordo/10-dashboard.md`
 - [ ] *(futuro)* Telegraf + InfluxDB + Grafana p/ histórico persistente
 
 **Aceitação (simplificada):** `docker compose up -d` sobe tudo com um
