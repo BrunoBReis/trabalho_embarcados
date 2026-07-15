@@ -1,7 +1,7 @@
 - `groups; echo ---; docker --version 2>&1; echo ---; ls /dev/ttyUSB* 2>&1; echo ---; docker images espressif/idf 2>&1 | head -5`
 - `docker pull espressif/idf:release-v5.3`
 - `docker run --rm -e HOME=/tmp espressif/idf:release-v5.3 idf.py --version 2>&1 | tail -3`
-- `   mkdir -p /home/brunobreis/Projects/embarcados/trabalho_final/firmware && docker run --rm -v "$PWD":"$PWD" -w "$PWD/firmware" -u $(id -u):$(id -g) -e HOME=/tmp espressif/idf:release-v5.3 idf.py create-project estacao 2>&1 | tail -5`
+- `   mkdir -p $REPO/firmware && docker run --rm -v "$PWD":"$PWD" -w "$PWD/firmware" -u $(id -u):$(id -g) -e HOME=/tmp espressif/idf:release-v5.3 idf.py create-project estacao 2>&1 | tail -5`
 - `   make set-target 2>&1 | tail -15`
 - `   make build 2>&1 | tail -20`
 - `git status --short && git add CLAUDE.md PLANO.md && git commit -m "docs: adiciona CLAUDE.md e PLANO.md (guias de trabalho do projeto)" -q && git add Makefile .clangd .gitignore && git commit -m "chore: ambiente de build dockerizado (Makefile, .clangd, .gitignore)
@@ -115,8 +115,8 @@ Modulo Wcmcu: anodo comum (silkscreen '-' mentiroso -> comum no 3V3,
 - `   sed -i 's/^CONFIG_ESTACAO_TESTE_BMP280=y$/# CONFIG_ESTACAO_TESTE_BMP280 is not set/; s/^# CONFIG_ESTACAO_TESTE_LED is not set$/# CONFIG_ESTACAO_TESTE_LED is not set\nCONFIG_ESTACAO_TESTE_LORA=y/' firmware/estacao/sdkconfig && grep -n "ESTACAO_TESTE\|ESTACAO_MODO" firmware/estacao/sdkconfig`
 - `   sed -i 's/^CONFIG_ESTACAO_MODO_ESTACAO=y$/# CONFIG_ESTACAO_MODO_ESTACAO is not set/' firmware/estacao/sdkconfig && sed -n '393,405p' firmware/estacao/sdkconfig && make build 2>&1 | tail -6`
 - `   git ls-remote https://github.com/tapparelj/gr-lora_sdr.git HEAD`
-- `   docker compose -f /home/brunobreis/Projects/embarcados/trabalho_final/infra/docker-compose.yml build sdr-receptor 2>&1 | tail -40`
-- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+- `   docker compose -f $REPO/infra/docker-compose.yml build sdr-receptor 2>&1 | tail -40`
+- `   cd $REPO/infra && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
    import gnuradio.lora_sdr as lora_sdr
    import osmosdr
    fs = lora_sdr.frame_sync(433000000, 125000, 12, False, [0x12], 2, 8)
@@ -206,14 +206,14 @@ roda('A (min_output_buffer porta 0)', cen_a)
    roda('1arg 65536 so copy', 65536, False, False)
    roda('2args 32768 so copy', 32768, True, False)
    " 2>&1 | grep -E "fim:|block_executor"`
-- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose up -d mosquitto 2>&1 | tail -2 && docker compose exec mosquitto sh -c "
+- `   cd $REPO/infra && docker compose up -d mosquitto 2>&1 | tail -2 && docker compose exec mosquitto sh -c "
    mosquitto_sub -h localhost -t 'estacao/#' -C 1 -W 10 > /tmp/recebido &
    sleep 1
    mosquitto_pub -h localhost -t 'estacao/v1/teste' -m 'ola do broker da fase 5'
    wait
    echo \"assinante recebeu: \$(cat /tmp/recebido)\"
    " && docker compose logs mosquitto 2>&1 | tail -3`
-- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose build sdr-receptor 2>&1 | tail -2 && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+- `   cd $REPO/infra && docker compose build sdr-receptor 2>&1 | tail -2 && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
    import pmt, struct # 1) formato de fio do PMT p/ simbolos (descoberta empirica) bruto = bytes(pmt.serialize_str(pmt.intern('abc')))
    print('serializacao de symbol \"abc\":', bruto.hex())
 import receptor_lora as r # 2) selfcheck do CRC + extracao de payload de um simbolo ascii assert r.crc16_ccitt(b'123456789') == 0x29B1
@@ -236,7 +236,7 @@ cliente = r.criar_cliente_mqtt()
    time.sleep(1)
    cliente.loop_stop()
    " 2>&1 | grep -E "ponte" ; echo "--- o que ficou retido no broker:" && docker compose exec mosquitto mosquitto_sub -t 'estacao/v1/dados' -C 1 -W 5 -v`
-- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose up -d mosquitto dashboard 2>&1 | tail -3 && echo "--- pagina servida:" && curl -s http://localhost:8080/ | head -c 120 && echo && curl -s -o /dev/null -w "mqtt.min.js: HTTP %{http_code}, %{size_download} bytes\n" http://localhost:8080/mqtt.min.js && echo "--- teste do listener websocket (assinante paho via ws):" && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+- `   cd $REPO/infra && docker compose up -d mosquitto dashboard 2>&1 | tail -3 && echo "--- pagina servida:" && curl -s http://localhost:8080/ | head -c 120 && echo && curl -s -o /dev/null -w "mqtt.min.js: HTTP %{http_code}, %{size_download} bytes\n" http://localhost:8080/mqtt.min.js && echo "--- teste do listener websocket (assinante paho via ws):" && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
    import paho.mqtt.client as mqtt, json, time
    recebido = []
    def on_msg(c, u, m): recebido.append(m.payload.decode())
@@ -251,7 +251,7 @@ cliente = r.criar_cliente_mqtt()
    print('retido via websocket:', recebido[0][:80] if recebido else 'NADA')
    " 2>&1 | tail -1`
 - `   docker ps --format '{{.Names}}\t{{.Status}}\t{{.Ports}}' && echo --- && docker compose logs dashboard 2>&1 | tail -3 && echo --- && docker compose exec dashboard wget -qO- http://localhost:80/ 2>&1 | head -c 150 && echo && curl -s http://127.0.0.1:8080/ 2>&1 | head -c 100; echo "curl exit: $?"`
-- `   cd /home/brunobreis/Projects/embarcados/trabalho_final/infra && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
+- `   cd $REPO/infra && docker compose run --rm --no-deps --entrypoint python3 sdr-receptor -c "
    import paho.mqtt.client as mqtt, time
    recebido = []
    def on_msg(c, u, m): recebido.append(m.payload.decode())
