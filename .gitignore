@@ -23,3 +23,4 @@ docs/wireviz/*.html
 docs/wireviz/*.gv
 docs/wireviz/*.tsv
 docs/wireviz/*.tmp
+*.zip

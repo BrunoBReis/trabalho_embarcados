@@ -38,7 +38,7 @@ RUN     = $(COMPOSE) run --rm $(TTYFLAG) toolchain
 # placa conectada; o build nunca deve depender dela.
 RUN_DEV = $(COMPOSE) run --rm $(TTYFLAG) dev
 
-.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada infra-up infra-down infra-logs infra-build mqtt-sub docs-serve docs-build docs-wireviz
+.PHONY: help set-target build flash erase-flash monitor run menuconfig clean shell lsp-setup test-bancada infra-up infra-down infra-logs infra-build mqtt-sub docs-serve docs-build docs-wireviz zip
 
 help:
 	@printf 'Targets disponíveis:\n'
@@ -64,6 +64,8 @@ help:
 	@printf '  make docs-serve     Serve em http://localhost:8000 com live reload\n'
 	@printf '  make docs-build     Gera o site estático em site/\n'
 	@printf '  make docs-wireviz   Regenera o diagrama de fiação (docs/wireviz/)\n'
+	@printf '\nEntrega:\n'
+	@printf '  make zip            Zipa os arquivos versionados (commit atual)\n'
 	@printf '\nVariáveis (sobrescrever na chamada ou no .env):\n'
 	@printf '  PROJ=%s\n' '$(PROJ)'
 	@printf '  PORT=%s\n' '$(PORT)'
@@ -135,6 +137,16 @@ docs-wireviz:
 		pip install -q wireviz==$(WIREVIZ_VERSION) && \
 		wireviz docs/wireviz/estacao.yml"
 	@echo "gerado: docs/wireviz/estacao.svg (versionar) + png/html/bom"
+
+# Zip de entrega: git archive empacota exatamente o que está versionado
+# no commit atual — tudo do .gitignore (build/, site/, .env) fica fora
+# de graça. Mudanças não commitadas NÃO entram; o alvo avisa.
+ZIP_FILE = trabalho_final-$(shell git rev-parse --short HEAD).zip
+zip:
+	git archive --format=zip --output=$(ZIP_FILE) HEAD
+	@test -z "$$(git status --porcelain)" || \
+		echo "atenção: há mudanças não commitadas que ficaram FORA do zip"
+	@echo "gerado: $(ZIP_FILE)"
 
 # Requer o firmware gravado com o teste "todos (modo bancada)".
 test-bancada:
