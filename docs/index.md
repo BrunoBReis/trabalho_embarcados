@@ -8,12 +8,12 @@ exibe num **dashboard** no browser.
 
 ```mermaid
 flowchart TD
-    subgraph estacao["🌡️ Estação (ESP32 — nó externo)"]
+    subgraph estacao["Estação (ESP32 — nó externo)"]
         SENS["Sensores<br/>BMP280 · DHT11 · LDR<br/>MH-RD · reed switch"] --> MCU["ESP32<br/>firmware/estacao"]
         MCU --> RA["Ra-02 SX1278<br/>LoRa TX"]
     end
     RA -. "433,0 MHz<br/>SF12 / BW 125 kHz" .-> SDR
-    subgraph pc["🖥️ Gateway (PC — Docker Compose)"]
+    subgraph pc["Gateway (PC — Docker Compose)"]
         SDR["RTL-SDR v3"] --> GR["gr-lora_sdr<br/>(GNU Radio)"]
         GR --> PONTE["PonteMqtt<br/>CRC16 → JSON"]
         PONTE --> MQ[("Mosquitto<br/>broker MQTT")]
@@ -52,6 +52,7 @@ make docs-build   # gera o site estático em site/
 
 - **[Arquitetura](arquitetura.md)** — os diagramas de como tudo se conecta
 - **[Conexões do hardware](conexoes.md)** — cada fio da protoboard
+- [**Componentes**](./componentes/index.md) - detalhamento dos componentes
 - **[Plano e próximos passos](plano.md)** — o roteiro por fases, ao vivo
 - **Diário de bordo** — a história real de cada etapa, com os problemas
   e as soluções (a parte mais valiosa para quem quiser reproduzir)

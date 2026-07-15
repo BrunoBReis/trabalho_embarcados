@@ -52,6 +52,7 @@ nav:
   - Arquitetura: arquitetura.md
   - Conexões do hardware: conexoes.md
   - Componentes:
+      - "Visão geral": componentes/index.md
       - "BMP280 — temperatura/pressão": componentes/BMP280.md
       - "DHT11 — umidade": componentes/DHT11.md
       - "LDR KY-018 — luminosidade": componentes/LDR.md
