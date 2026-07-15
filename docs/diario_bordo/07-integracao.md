@@ -26,8 +26,8 @@
 | 15 | flags | u8 | bit0=BMP280 bit1=LDR bit2=CHUVA bit3=DHT11 |
 | 16 | crc16 | u16 | CCITT-FALSE dos 16 bytes anteriores |
 
-Por quê assim: JSON de ~150 bytes levaria ~10 s no ar em SF12 (LoRa a
-~290 bps); 18 bytes levam ~1,2 s. Ponto fixo evita float no fio; packed
+Por quê assim: JSON de \~150 bytes levaria \~10 s no ar em SF12 (LoRa a
+\~290 bps); 18 bytes levam \~1,2 s. Ponto fixo evita float no fio; packed
 elimina padding do compilador; endianness documentada (nativa do ESP32);
 seq+CRC substituem o que o LoRaWAN daria (detecção de perda/corrupção).
 
@@ -58,9 +58,6 @@ pendência registrada no PLANO; o formato não muda quando forem trocados.
 - `_Static_assert(sizeof == 18)` no header: se alguém mudar a struct e
   esquecer do contrato, o build quebra — não o rádio.
 
-## Pendências
-
-- 📷 Foto da protoboard completa (anexar aqui).
 
 ## Como validar
 

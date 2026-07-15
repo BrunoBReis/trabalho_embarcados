@@ -185,7 +185,7 @@ barramento); o modo estação só consome o resultado (`s_lora_ok`).
 
 1. Voltar para SF7/BW125 (o enlace de produção; pacote de 18 B cai de
    ~1,3 s para ~60 ms no ar) e medir perda via seq. *(adiado — extra)*
-2. Fase 5: ponte SDR → MQTT (valida CRC16 + desserializa + publica). ✅
+2. Fase 5: ponte SDR → MQTT (valida CRC16 + desserializa + publica).
 
 Referências: Semtech **AN1200.22** (LoRa Modulation Basics), datasheet
 SX1276/77/78/79 cap. 4.1, calculadora de airtime do TTN.

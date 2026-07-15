@@ -34,7 +34,3 @@
 2. **Ímã no tubinho de vidro**: pulso por passada (passada lenta pode
    contar 2 — o ímã entra e sai do alcance; considerar no fator da Fase 7).
 
-## Como validar
-
-Teste "Reed-switch - vento" no `make menuconfig` → `make run` → passar
-ímã (ou tocar jumper GND no S): pulsos aparecem na janela seguinte.

@@ -1,6 +1,6 @@
 # 10 — Fase 6: Dashboard mínimo (HTML + MQTT sobre WebSocket)
 
-## Decisão de escopo (12/07/2026)
+## Decisão de escopo
 
 O foco do trabalho é o embarcado — que já funciona ponta a ponta. A
 stack completa (Telegraf + InfluxDB + Grafana) foi adiada como melhoria

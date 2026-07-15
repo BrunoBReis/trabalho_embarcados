@@ -30,7 +30,3 @@
    código mantém a semântica "duty = brilho".
 3. Ordem dos pinos do módulo: `B R G −` (difere do KY-016 clássico).
 
-## Como validar
-
-Teste "LED RGB" no `make menuconfig` → `make run` → cores acompanham o
-monitor (2 s cada) e fade suave do vermelho ao final do ciclo.

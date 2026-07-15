@@ -1,10 +1,5 @@
 # Pinagem da ESP32 — decisões e fundamentos
 
-> Documento de referência do projeto. Registra **por que** o mapa de pinos
-> do CLAUDE.md é o que é, e os conceitos de hardware que sustentam cada
-> decisão. Escrito antes da Fase 0, a partir do estudo do pinout e da
-> placa real (ESP32 WROOM-32 DevKit, 30 pinos).
-
 ## 1. O modelo mental: três camadas físicas
 
 Para entender qualquer coisa sobre pinos, é preciso separar três objetos
@@ -12,7 +7,7 @@ que costumam ser chamados todos de "a ESP32":
 
 1. **O chip (die de silício)** — tem GPIOs numerados de 0 a 39, com
    buracos: os GPIO 20, 24 e 28–31 não existem em lugar nenhum.
-2. **O módulo ESP-WROOM-32** — a "lata" metálica com antena. Contém o
+2. **O módulo ESP-WROOM-32** — Contém o
    chip **mais um chip de memória flash** (onde o firmware fica gravado),
    conectados internamente pelos GPIO 6–11.
 3. **A placa DevKit** — a PCB que expõe um *subconjunto* dos pinos do
@@ -55,8 +50,6 @@ Pontos essenciais:
   que não passa pela matrix e permite frequências maiores — caso do
   barramento VSPI nos GPIOs 18/19/23.
 
-Corolário: na ESP32 **não se decora função de pino, decoram-se as
-restrições**. Todo o resto é roteável.
 
 ## 3. As restrições (os três filtros do mapa)
 
@@ -81,10 +74,6 @@ lógico** desses pinos e usa a foto como configuração de partida:
 Depois do reset viram GPIOs comuns; o risco é o circuito externo
 puxá-los para o nível errado *durante* o reset — a placa não liga ou não
 grava, e o sintoma parece bug de software. Decisão do projeto: não usar.
-
-Curiosidade útil: quase nunca se aperta o botão BOOT porque o chip
-USB-serial da placa manipula EN e GPIO 0 automaticamente durante o
-`make flash`.
 
 ### 3.3 Somente entrada: GPIO 34–39
 
@@ -138,7 +127,7 @@ contato seco).
 | LoRa RST / DIO0 | 14 / 26 | Escolha livre entre as sobras; DIO0 precisa de interrupção, que todo GPIO tem |
 | LED R/G/B | 16/17/13 | LEDC roteia para qualquer saída; eram as sobras. (Em módulos WROVER 16/17 são da PSRAM — não é o nosso caso WROOM-32) |
 
-## 6. Achados na placa real (fotos de 09/07/2026)
+## 6. Achados na placa real
 
 - Silkscreen usa `D<n>` = GPIO n (D13 = GPIO 13).
 - **GPIO 16 e 17 aparecem como `RX2` e `TX2`** (defaults da UART2 —
@@ -148,13 +137,3 @@ contato seco).
 - `RX0`/`TX0` (GPIO 3/1) estão livres no mapa, mas **não usar**: são a
   UART0, o canal do log/monitor serial e da gravação de firmware.
   Pendurar um sensor ali interfere no `make flash`/`make monitor`.
-
-## 7. Resumo para decorar
-
-```
-NUNCA:      GPIO 6–11 (flash interna)
-COM MEDO:   GPIO 0, 2, 12, 15 (strapping) e GPIO 1, 3 (UART0/monitor)
-SÓ ENTRADA: GPIO 34–39 (sem saída, sem pull-up) → ideais para ADC
-ANALÓGICO:  sempre ADC1 (ADC2 briga com Wi-Fi)
-O RESTO:    roteável pela GPIO matrix — convenção e conveniência
-```

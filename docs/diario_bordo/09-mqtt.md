@@ -1,6 +1,6 @@
 # 09 — Fase 5: MQTT (broker + ponte SDR → MQTT)
 
-## Decisão de priorização (12/07/2026)
+## Decisão de priorização
 
 SF7 e teste de perda da Fase 4 viraram extras pós-Fase 6: pipeline
 completo (MQTT + dashboard) vale mais que enlace otimizado. O enlace
@@ -76,7 +76,7 @@ dentro do container: CRC16 conferiu, campos decodificados (22,62 °C /
 (que conectou depois — retain comprovado). Caminho de descarte testado
 com payload de tamanho errado.
 
-## Aceitação da fase (12/07/2026) ✅
+## Aceitação da fase
 
 Ao vivo na bancada: `mosquitto_sub -t 'estacao/#' -v` mostrando o JSON
 da estação a cada 10 s pelo caminho completo

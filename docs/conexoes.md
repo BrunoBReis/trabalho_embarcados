@@ -1,16 +1,17 @@
 # Conexões do hardware
 
-A fonte de verdade da pinagem é o **CLAUDE.md** (contrato do projeto) e
-as justificativas técnicas estão em [Pinagem](pinagem.md). Esta página
-apresenta a topologia — o que liga em quê, por qual barramento.
+A definição dos componenetes foi feita antes do desenvolvimento do firmaware,
+basta ver em [Pinagem](./pinagem.md).
+Esta página apresenta a topologia — o que liga em quê, por qual barramento.
+
+## ESP32
+
+![ESP32 Pinout](./assets/esp32_pinout.png)
 
 ## Diagrama de fiação (WireViz)
 
 Gerado a partir de [`docs/wireviz/estacao.yml`](https://github.com/BrunoBReis/trabalho_embarcados/blob/main/docs/wireviz/estacao.yml)
-com o [WireViz](https://github.com/wireviz/WireViz) — mexeu na fiação,
-edita o YAML e roda `make docs-wireviz`; o diagrama nunca desatualiza
-porque *é* gerado do contrato. Cores = sugestão para os jumpers
-(vermelho 3V3, preto GND).
+com o [WireViz](https://github.com/wireviz/WireViz) — mexeu na fiação.
 
 ![Diagrama de fiação da estação](wireviz/estacao.svg)
 
@@ -53,7 +54,7 @@ flowchart LR
     ESP ---|"R→16 · G→17 · B→13"| LED
 ```
 
-## Tabela canônica (contrato — não alterar sem discutir)
+## Tabela canônica
 
 | Função | GPIO | Nota |
 |---|---|---|
@@ -72,10 +73,8 @@ flowchart LR
 | LoRa DIO0 | 26 | IRQ TxDone/RxDone (reservado; TX atual usa polling) |
 | LED R / G / B | 16 / 17 / 13 | PWM via LEDC; módulo anodo comum |
 
-**Alimentação:** tudo em **3V3** (Ra-02 NUNCA em 5 V); Ra-02 com dois
-GNDs ligados (retorno de RF). **Regras de ouro:** nunca GPIO 6–11
-(flash) nem 0/2/12/15 (strapping); analógico só no ADC1 (ADC2 morre com
-Wi-Fi); 1/3 são o UART0 do monitor.
+**Alimentação:** tudo em **3V3**; Ra-02 com dois
+GNDs ligados.
 
 ## Cadeia de RF
 
@@ -89,9 +88,6 @@ flowchart TD
     ANT1 -. "433,0 MHz" .- ANT2
 ```
 
-Lição registrada no diário: *rosca engatada não prova contato* — o
-miolo (pino vs furo) decide, e RP-SMA existe para confundir
-([08 — LoRa](diario_bordo/08-lora.md)).
 
 ## Mapa visual da placa
 

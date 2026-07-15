@@ -24,11 +24,3 @@ segura a linha em nível baixo ~20 ms para "acordar" o sensor, que
 responde com 40 bits onde **cada bit é codificado pela duração do pulso
 alto** (~27 µs = 0, ~70 µs = 1). Não é o 1-Wire da Dallas nem I²C — é
 um protocolo só do DHT.
-
-## Por que o driver desliga interrupções
-
-Medir pulsos de dezenas de µs por software exige que nada interrompa a
-CPU no meio: o driver `esp-idf-lib/dht` usa seção crítica + busy-wait
-de µs durante ~5 ms — a **exceção legítima** à regra "nunca busy-wait"
-do projeto, porque o protocolo exige. Detalhes no diário:
-[04 — DHT11](../diario_bordo/04-dht11.md).

@@ -37,8 +37,3 @@
   (eletrólise). Melhoria futura (Fase 3+): alimentar o VCC do módulo por
   um GPIO e energizar só na hora da leitura.
 
-## Como validar
-
-Selecionar o teste "MH-RD - chuva" no `make menuconfig` → `make run` →
-molhar o pente (fazendo ponte entre trilhas): AO despenca, DO vira
-`MOLHADO`, LED do DO acende; secar reverte tudo.

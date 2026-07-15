@@ -20,7 +20,7 @@
 - **Ruído e média**: o ADC da ESP32 dança ±20–50 contagens; média de N
   amostras cancela ruído aleatório.
 
-## 🐛 Diagnóstico: módulo KY-018 com LDR soldado nos furos errados
+## Diagnóstico: módulo KY-018 com LDR soldado nos furos errados
 
 Sintoma: leitura **0 cravado** em qualquer condição de luz.
 
@@ -34,12 +34,3 @@ Sintoma: leitura **0 cravado** em qualquer condição de luz.
    marca de retrabalho. Caminho 3V3→LDR→S aberto → o resistor de 10 kΩ
    puxa o S para GND → 0 permanente.
 
-**Pendência**: consertar (ressoldar o LDR nos furos do `S1`) ou montar o
-divisor na protoboard com LDR avulso + resistor ~10 kΩ:
-`3V3 —[LDR]—●—[10k]—GND`, nó central no GPIO 34.
-
-## Como validar (quando o hardware existir)
-
-1. Selecionar o teste do LDR no `make menuconfig` → `make run`.
-2. `luz (bruto 0-4095): N` a cada 1 s; cobrir o LDR e iluminar com
-   lanterna deve mover o valor de forma clara e estável.
