@@ -1,0 +1,1702 @@
+
+<!doctype html>
+<html lang="pt" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Reprodução didática da Davis Vantage Pro2 — Fundamentos de Sistemas Embarcados (FGA/UnB)">
+      
+      
+        <meta name="author" content="Bruno Bragança dos Reis">
+      
+      
+        <link rel="canonical" href="https://brunobreis.github.io/trabalho_embarcados/conceitos/08-lora-sdr/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>Conceitos — Etapa 08: LoRa (SX1278) + SDR - Estação Meteorológica IoT — ESP32 + LoRa</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#conceitos-etapa-08-lora-sx1278-sdr" class="md-skip">
+          Pular para conteúdo
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
+    <a href="../.." title="Estação Meteorológica IoT — ESP32 + LoRa" class="md-header__button md-logo" aria-label="Estação Meteorológica IoT — ESP32 + LoRa" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Estação Meteorológica IoT — ESP32 + LoRa
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Conceitos — Etapa 08: LoRa (SX1278) + SDR
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Modo claro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Modo claro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Modo escuro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Modo escuro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Pesquisar">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando busca
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/BrunoBReis/trabalho_embarcados" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrunoBReis/trabalho_embarcados
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navegação" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Estação Meteorológica IoT — ESP32 + LoRa" class="md-nav__button md-logo" aria-label="Estação Meteorológica IoT — ESP32 + LoRa" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Estação Meteorológica IoT — ESP32 + LoRa
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/BrunoBReis/trabalho_embarcados" title="Ir para repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    BrunoBReis/trabalho_embarcados
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Início
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../arquitetura/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Arquitetura
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../conexoes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conexões do hardware
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plano/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plano e próximos passos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pinagem/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pinagem (justificativas)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Componentes
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Componentes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visão geral
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/BMP280/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BMP280 — temperatura/pressão
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/DHT11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DHT11 — umidade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/LDR/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LDR KY-018 — luminosidade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/pente_LM393/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MH-RD + LM393 — chuva
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/reed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reed switch — vento
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/LED/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LED RGB — status
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../componentes/LoRa/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LoRa Ra-02 — rádio
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Diário de bordo
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Diário de bordo
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visão geral
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/00-ambiente/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    00 — Ambiente
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/01-bmp280/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    01 — BMP280 (I²C)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/02-ldr/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    02 — LDR (ADC)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/03-chuva/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    03 — Chuva (MH-RD)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/04-dht11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    04 — DHT11
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/05-vento/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    05 — Vento (reed)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/06-led-rgb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    06 — LED RGB (LEDC)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/07-integracao/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    07 — Integração
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/08-lora/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    08 — LoRa + SDR
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/09-mqtt/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    09 — MQTT
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../diario_bordo/10-dashboard/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    10 — Dashboard
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#a-modulacao-chirp-css-e-lora" class="md-nav__link">
+    <span class="md-ellipsis">
+      A modulação: chirp, CSS e LoRa
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="A modulação: chirp, CSS e LoRa">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chirp" class="md-nav__link">
+    <span class="md-ellipsis">
+      Chirp
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lora-vs-css-genero-e-especie" class="md-nav__link">
+    <span class="md-ellipsis">
+      LoRa vs CSS (gênero e espécie)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-lado-sdr" class="md-nav__link">
+    <span class="md-ellipsis">
+      O lado SDR
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="O lado SDR">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#gr-lora_sdr-e-gnu-radio" class="md-nav__link">
+    <span class="md-ellipsis">
+      gr-lora_sdr e GNU Radio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-nesta-etapa" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker nesta etapa
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arg-gr_lora_sdr_refhash-pin-por-commit" class="md-nav__link">
+    <span class="md-ellipsis">
+      ARG GR_LORA_SDR_REF=&lt;hash&gt; — pin por commit
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#da-antena-ao-payload-o-caminho-completo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Da antena ao payload (o caminho completo)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#o-bpf-filtro-passa-faixa" class="md-nav__link">
+    <span class="md-ellipsis">
+      O BPF (filtro passa-faixa)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-driver-no-firmware-lorac" class="md-nav__link">
+    <span class="md-ellipsis">
+      O driver no firmware (lora.c)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="O driver no firmware (lora.c)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spi-a-1-mhz-efeito-pratico" class="md-nav__link">
+    <span class="md-ellipsis">
+      SPI a 1 MHz — efeito prático
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#as-tres-configs-do-lora_init" class="md-nav__link">
+    <span class="md-ellipsis">
+      As três configs do lora_init()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset-por-hardware" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reset por hardware
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#leituraescrita-de-registrador-o-full-duplex-do-spi" class="md-nav__link">
+    <span class="md-ellipsis">
+      Leitura/escrita de registrador — o full-duplex do SPI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pa_config_boost_2dbm-0x80" class="md-nav__link">
+    <span class="md-ellipsis">
+      PA_CONFIG_BOOST_2DBM 0x80
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a-fifo-desfazendo-a-imagem-de-fila" class="md-nav__link">
+    <span class="md-ellipsis">
+      A FIFO — desfazendo a imagem de "fila"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modos-de-operacao-regopmode-3-bits-baixos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modos de operação (RegOpMode, 3 bits baixos)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lora_config_modem-linha-a-linha" class="md-nav__link">
+    <span class="md-ellipsis">
+      lora_config_modem() linha a linha
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lora_tx-passo-a-passo" class="md-nav__link">
+    <span class="md-ellipsis">
+      lora_tx() passo a passo
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maximo-de-informacao-por-pacote" class="md-nav__link">
+    <span class="md-ellipsis">
+      Máximo de informação por pacote
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bibliotecas-prontas-vs-driver-na-mao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bibliotecas prontas (vs driver na mão)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-contrato-entre-as-pontas" class="md-nav__link">
+    <span class="md-ellipsis">
+      O contrato entre as pontas
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="O contrato entre as pontas">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sync-word-0x12" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sync word 0x12
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dois-crcs-por-design-a-duplicacao-cpython" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dois CRCs por design + a duplicação C/Python
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crc_verif2-false" class="md-nav__link">
+    <span class="md-ellipsis">
+      crc_verif(2, False)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#payload_de_pmt-resgatando-binario-de-uma-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      payload_de_pmt() — resgatando binário de uma "string"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variaveis-de-ambiente-ldconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variáveis de ambiente ≠ ldconfig
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#signalsignal-sinal-de-radio" class="md-nav__link">
+    <span class="md-ellipsis">
+      signal.signal ≠ sinal de rádio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tbrun" class="md-nav__link">
+    <span class="md-ellipsis">
+      tb.run()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#papel-do-receptor_lorapy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Papel do receptor_lora.py
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#teste_todos-vs-modo_estacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      TESTE_TODOS vs MODO_ESTACAO
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flag-de-erro-do-reed-vento-nao-existe-de-proposito" class="md-nav__link">
+    <span class="md-ellipsis">
+      Flag de erro do reed (vento): não existe, de propósito
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="conceitos-etapa-08-lora-sx1278-sdr">Conceitos — Etapa 08: LoRa (SX1278) + SDR<a class="headerlink" href="#conceitos-etapa-08-lora-sx1278-sdr" title="Permanent link">&para;</a></h1>
+<p>Síntese das discussões de revisão da etapa 08 (diário:
+<code>docs/diario_bordo/08-lora.md</code>, código: <code>firmware/estacao/main/lora.c</code>,
+<code>infra/sdr/Dockerfile</code>, <code>infra/sdr/receptor_lora.py</code>).</p>
+<h2 id="a-modulacao-chirp-css-e-lora">A modulação: chirp, CSS e LoRa<a class="headerlink" href="#a-modulacao-chirp-css-e-lora" title="Permanent link">&para;</a></h2>
+<h3 id="chirp">Chirp<a class="headerlink" href="#chirp" title="Permanent link">&para;</a></h3>
+<p>Um <strong>chirp</strong> é um sinal cuja frequência <strong>varre continuamente</strong> uma faixa
+ao longo do tempo (<em>up-chirp</em>: sobe da borda de baixo à de cima da banda;
+<em>down-chirp</em>: o inverso). O nome é onomatopeia do canto de pássaro — um
+assobio subindo de tom.</p>
+<p>O CSS carrega informação na <strong>posição de início da varredura</strong>: o símbolo
+dura <code>T = 2^SF / BW</code> (SF12/125 kHz: 4096/125000 = <strong>32,8 ms</strong>) e pode
+começar em 2^SF pontos da banda — 4096 posições em SF12 = <strong>12 bits por
+símbolo</strong>. O chirp começa na frequência correspondente ao valor, sobe até a
+borda e "dá a volta" (deslocamento cíclico do chirp base).</p>
+<p>Por que funciona tão bem:</p>
+<ol>
+<li><strong>Demodulação trivial</strong> ("dechirp"): multiplicar pelo down-chirp
+   conjugado cancela a varredura; o chirp deslocado vira um <strong>tom
+   constante</strong> e o índice do pico da FFT <strong>é</strong> o símbolo. É exatamente o
+   bloco <code>fft_demod</code> do receptor.</li>
+<li><strong>Espectro espalhado</strong>: cada símbolo ocupa a banda toda por um tempo
+   longo — interferência estreita e ruído se diluem; LoRa decodifica
+   abaixo do piso de ruído (por isso +2 dBm sobram na bancada).</li>
+<li><strong>Tolerância a deriva de cristal/Doppler</strong>: erro de frequência desloca
+   o pico ±1 bin; o código de Gray transforma isso em 1 bit errado, que o
+   Hamming corrige.</li>
+</ol>
+<p>No waterfall do gqrx, cada faixa de 125 kHz × ~1 s é o quadro inteiro:
+8 up-chirps de preâmbulo (símbolo 0 repetido — o padrão que o <code>frame_sync</code>
+procura), sync word, 2,25 down-chirps, header e payload.</p>
+<h3 id="lora-vs-css-genero-e-especie">LoRa vs CSS (gênero e espécie)<a class="headerlink" href="#lora-vs-css-genero-e-especie" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CSS</strong> (Chirp Spread Spectrum) é a <em>técnica de modulação</em> — conceito
+  público, usado em radar desde os anos 1940.</li>
+<li><strong>LoRa</strong> é a <em>implementação proprietária da Semtech</em> de um PHY sobre
+  CSS: preâmbulo, sync word, mapeamento símbolo→deslocamento cíclico,
+  código de Gray, entrelaçamento, Hamming, whitening, header e CRC.</li>
+<li><strong>LoRaWAN</strong> é outra camada acima (MAC/rede sobre o PHY LoRa). O projeto
+  usa LoRa "cru", sem LoRaWAN.</li>
+</ul>
+<p>Analogia: CSS está para o LoRa como "serial síncrona" está para o SPI —
+princípio físico vs protocolo completo.</p>
+<h2 id="o-lado-sdr">O lado SDR<a class="headerlink" href="#o-lado-sdr" title="Permanent link">&para;</a></h2>
+<h3 id="gr-lora_sdr-e-gnu-radio">gr-lora_sdr e GNU Radio<a class="headerlink" href="#gr-lora_sdr-e-gnu-radio" title="Permanent link">&para;</a></h3>
+<p><strong>GNU Radio</strong>: framework de rádio definido por software — monta-se um
+<em>flowgraph</em> (grafo de blocos de processamento: fonte → filtros →
+demodulador) e o runtime C++ (com bindings Python) empurra amostras entre
+blocos, uma thread por bloco.</p>
+<p><strong>gr-lora_sdr</strong>: módulo <em>out-of-tree</em> (OOT) do GNU Radio — blocos extras
+instalados por fora, visíveis como <code>gnuradio.lora_sdr</code>. Desenvolvido no
+laboratório TCL da EPFL (Tapparel et al.), é uma implementação <strong>aberta e
+completa do PHY LoRa em software</strong> — notável porque o LoRa é proprietário
+(nasceu de engenharia reversa/publicações). Todo o pipeline que existe em
+silício no SX1278 refeito como blocos de flowgraph.</p>
+<p><strong>Por que ajuda aqui</strong>: com um único Ra-02, ninguém "fala LoRa" para
+receber o pacote. O RTL-SDR + gr-lora_sdr fazem o papel do segundo SX1278:
+o gateway de hardware virou software no PC.</p>
+<h3 id="docker-nesta-etapa">Docker nesta etapa<a class="headerlink" href="#docker-nesta-etapa" title="Permanent link">&para;</a></h3>
+<p>O caso mais forte de DevOps do projeto, porque a dependência é hostil:</p>
+<ol>
+<li>gr-lora_sdr <strong>não tem release nem pacote</strong> — compila da fonte contra uma
+   versão específica do GNU Radio. No Arch (rolling), o GR do sistema muda;
+   no container é o 3.10.9 do Ubuntu 24.04 para sempre (o 22.04 traz o
+   3.10.1, que tem o bug do <code>min_output_buffer</code> que quebra SF12).</li>
+<li><strong>Reprodutibilidade</strong>: imagem congela distro + GNU Radio + commit exato
+   do módulo; <code>docker compose up sdr-receptor</code> reconstrói o receptor
+   idêntico em qualquer máquina.</li>
+<li><strong>Não polui o host</strong>: os <code>.so</code> e módulos Python ficam na imagem.</li>
+<li><strong>Integração</strong>: o receptor é um serviço no compose ao lado do Mosquitto
+   (a rede do compose resolve <code>MQTT_HOST=mosquitto</code> por nome).</li>
+</ol>
+<h3 id="arg-gr_lora_sdr_refhash-pin-por-commit"><code>ARG GR_LORA_SDR_REF=&lt;hash&gt;</code> — pin por commit<a class="headerlink" href="#arg-gr_lora_sdr_refhash-pin-por-commit" title="Permanent link">&para;</a></h3>
+<p><code>ARG</code> é variável de build do Docker; o valor é um hash de commit usado no
+<code>git checkout</code>. <strong>Fixa (pin)</strong> o gr-lora_sdr num commit exato: sem isso, o
+clone pegaria "o main de hoje" e o build de véspera de apresentação poderia
+quebrar. É o análogo, para dependência via git, do <code>dependencies.lock</code> do
+Component Manager (etapa 01). Por ser <code>ARG</code>, dá para testar outro commit
+com <code>--build-arg</code> sem editar o arquivo.</p>
+<h3 id="da-antena-ao-payload-o-caminho-completo">Da antena ao payload (o caminho completo)<a class="headerlink" href="#da-antena-ao-payload-o-caminho-completo" title="Permanent link">&para;</a></h3>
+<p>É o TX do firmware desfeito em ordem inversa:</p>
+<ol>
+<li><strong>Antena → RTL-SDR</strong>: o tuner (R860) translada a fatia do espectro em
+   433,0 MHz para banda-base; o RTL2832U digitaliza — amostras IQ
+   (complexas, 8 bits) a 250 kS/s pela USB. Daqui em diante é só software.</li>
+<li><strong><code>osmosdr.source</code></strong>: bloco-fonte; frequência, taxa, ganho.</li>
+<li><strong><code>blocks.copy</code></strong>: não processa — só carrega um buffer maior (4
+   símbolos), workaround do issue #55 (SF12 pede 8196 amostras/chamada;
+   buffer padrão dá 8191). ATENÇÃO: usar <code>set_min_output_buffer(0, N)</code> —
+   a forma de 1 argumento é silenciosamente ignorada no GR 3.10.</li>
+<li><strong><code>frame_sync</code></strong>: acha o preâmbulo (8 up-chirps), reconhece a sync word
+   e alinha tempo/frequência (corrige offset de oscilador).</li>
+<li><strong><code>fft_demod</code></strong>: dechirp + FFT — pico da FFT = símbolo.</li>
+<li><strong><code>gray_mapping</code></strong>: desfaz o código de Gray (erro de ±1 bin → 1 bit).</li>
+<li><strong><code>deinterleaver</code></strong>: desfaz o entrelaçamento (o TX espalha os bits de
+   cada byte por vários símbolos → perda vira erros espalhados que o FEC
+   corrige, não um buraco concentrado).</li>
+<li><strong><code>hamming_dec</code></strong>: o FEC do CR 4/5 (1 bit de paridade a cada 4).</li>
+<li><strong><code>header_decoder</code></strong>: lê o header explícito (tamanho/CR/CRC) e
+   realimenta o <code>frame_sync</code> via porta de mensagem <code>frame_info</code> — é assim
+   que o RX sabe quantos símbolos faltam.</li>
+<li><strong><code>dewhitening</code></strong>: desfaz o embaralhamento pseudo-aleatório.</li>
+<li><strong><code>crc_verif</code></strong>: confere o <strong>CRC do quadro LoRa</strong> (PHY) e publica o
+    payload como mensagem.</li>
+<li><strong><code>PonteMqtt</code></strong> (código nosso): valida o CRC16 fim-a-fim, desserializa
+    os 18 B e publica JSON no Mosquitto.</li>
+</ol>
+<h3 id="o-bpf-filtro-passa-faixa">O BPF (filtro passa-faixa)<a class="headerlink" href="#o-bpf-filtro-passa-faixa" title="Permanent link">&para;</a></h3>
+<p>Usado mecanicamente como emenda fêmea-fêmea entre dois SMA machos, mas
+eletricamente ele <strong>passa uma janela de frequências e atenua o resto</strong>:</p>
+<ul>
+<li><strong>No TX</strong>: atenua as harmônicas do PA (866/1299 MHz); o sinal desejado
+  atravessa com perda de inserção pequena (~1–2 dB).</li>
+<li><strong>No RX</strong> (se estivesse na antena do SDR): protegeria o front-end do
+  RTL-SDR de sinais fortes fora de banda (FM, TV, celular), que o saturam
+  mesmo fora da frequência sintonizada.</li>
+</ul>
+<p>O do projeto veio <strong>sem serigrafia</strong> (banda desconhecida) e foi validado
+experimentalmente: o TX a +2 dBm o atravessou com força ⇒ passa 433 MHz.
+Não é peça neutra — um BPF de outra banda mataria o sinal (30–40 dB).</p>
+<h2 id="o-driver-no-firmware-lorac">O driver no firmware (<code>lora.c</code>)<a class="headerlink" href="#o-driver-no-firmware-lorac" title="Permanent link">&para;</a></h2>
+<h3 id="spi-a-1-mhz-efeito-pratico">SPI a 1 MHz — efeito prático<a class="headerlink" href="#spi-a-1-mhz-efeito-pratico" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Elétrico (motivo real)</strong>: jumpers de protoboard têm parasitas e
+  contatos duvidosos; a 1 MHz cada bit dura 1 µs e a linha assenta. Margem
+  de robustez (houve caso real: MOSI em furo vazio).</li>
+<li><strong>Tempo (irrelevante)</strong>: transação de registrador = 16 µs; FIFO de 19 B ≈
+  152 µs — contra ~1,3 s de pacote no ar em SF12, o SPI é 4 ordens de
+  grandeza mais rápido que o gargalo. Subir a 10 MHz não mudaria nada.</li>
+</ul>
+<h3 id="as-tres-configs-do-lora_init">As três configs do <code>lora_init()</code><a class="headerlink" href="#as-tres-configs-do-lora_init" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>gpio_config_t</code></strong>: <code>.pin_bit_mask = 1ULL &lt;&lt; PIN</code> — a API configura
+  vários pinos de uma vez via máscara de 64 bits (<code>ULL</code> porque há GPIOs &gt;
+  31); <code>.mode = OUTPUT</code> porque nós dirigimos o RST.</li>
+<li><strong><code>spi_bus_config_t</code></strong> (o barramento): roteia SCK/MISO/MOSI pela matriz
+  de GPIO; <code>quadwp/quadhd = -1</code> desliga os pinos do modo quad-SPI (4 linhas
+  de dados, coisa de memória flash); <code>SPI_DMA_CH_AUTO</code> deixa o driver
+  escolher canal de DMA.</li>
+<li><strong><code>spi_device_interface_config_t</code></strong> (o dispositivo no barramento):
+  <code>clock_speed_hz</code> por dispositivo; <code>.mode = 0</code> = CPOL/CPHA (clock repousa
+  em baixo, amostra na subida — tem que casar com o chip);
+  <code>.spics_io_num</code> entrega o NSS ao driver (abaixa no início da transação,
+  sobe no fim); <code>.queue_size</code> = fila interna para uso assíncrono.</li>
+</ul>
+<h3 id="reset-por-hardware">Reset por hardware<a class="headerlink" href="#reset-por-hardware" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="n">gpio_set_level</span><span class="p">(</span><span class="n">RST</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span><span class="w"> </span><span class="n">vTaskDelay</span><span class="p">(</span><span class="mi">2</span><span class="n">ms</span><span class="p">);</span><span class="w">   </span><span class="c1">// segura RST (ativo-baixo)</span>
+<span class="n">gpio_set_level</span><span class="p">(</span><span class="n">RST</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w"> </span><span class="n">vTaskDelay</span><span class="p">(</span><span class="mi">10</span><span class="n">ms</span><span class="p">);</span><span class="w">  </span><span class="c1">// solta e espera acordar</span>
+</code></pre></div>
+<p>Datasheet §7.2.2 (pede ≥100 µs baixo e ~5 ms de espera; os valores têm
+folga). Força o chip ao estado de power-on. Necessário porque o ESP32 pode
+rebootar <strong>sem</strong> cortar a alimentação do rádio — sem reset, o rádio
+continuaria no estado da execução anterior e o firmware partiria de
+premissas falsas.</p>
+<h3 id="leituraescrita-de-registrador-o-full-duplex-do-spi">Leitura/escrita de registrador — o full-duplex do SPI<a class="headerlink" href="#leituraescrita-de-registrador-o-full-duplex-do-spi" title="Permanent link">&para;</a></h3>
+<p>Protocolo do SX1278: <strong>1º byte = comando</strong> (7 bits de endereço + bit
+<strong>wnr</strong>: MSB 0 = leitura, 1 = escrita), <strong>2º byte = dado</strong>.</p>
+<ul>
+<li><code>reg &amp; 0x7F</code> (AND com <code>0111 1111</code>): força MSB=0 → leitura.</li>
+<li><code>reg | 0x80</code> (OR com <code>1000 0000</code>): força MSB=1 → escrita.</li>
+</ul>
+<p>O pulo do gato: <strong>SPI é full-duplex e "burro"</strong> — para cada bit que entra
+por MOSI, um sai por MISO no mesmo pulso de clock. Não há
+"pergunta-depois-resposta":</p>
+<div class="highlight"><pre><span></span><code>clock:        [ byte 1 ]          [ byte 2 ]
+MOSI (envia): endereço|wnr=0      0x00 (sacrifício, só gera clock)
+MISO (volta): lixo (rx[0])        VALOR DO REGISTRADOR (rx[1])
+</code></pre></div>
+<p>Durante o byte 1 o rádio ainda está ouvindo o endereço (devolve lixo); no
+byte 2, enquanto o master transmite um 0x00 ignorado (só o master gera
+clock), o rádio põe o registrador no MISO. Por isso <code>*valor = rx[1]</code> — o
+dado útil é o <strong>segundo</strong> byte recebido; <code>valor</code> é parâmetro de saída
+(idioma C: erro pelo <code>return</code>, dado pelo ponteiro). Na escrita não há nada
+a receber — <code>escrever_reg</code> nem tem <code>rx_buffer</code>.</p>
+<p>Diagnóstico embutido: pull-up interno no MISO → leitura <code>0xFF</code> = linha
+aberta (fio/NSS); <code>0x00</code> persistente = alimentação do rádio caindo.</p>
+<h3 id="pa_config_boost_2dbm-0x80"><code>PA_CONFIG_BOOST_2DBM 0x80</code><a class="headerlink" href="#pa_config_boost_2dbm-0x80" title="Permanent link">&para;</a></h3>
+<p><code>RegPaConfig</code> (0x09), <code>0x80 = 1000 0000</code>:</p>
+<ul>
+<li><strong>bit 7 (PaSelect) = 1</strong>: saída <strong>PA_BOOST</strong> — no Ra-02 é a única
+  fisicamente ligada ao conector de antena (RFO está no ar). Imposição do
+  módulo, não escolha.</li>
+<li><strong>bits 3–0 (OutputPower) = 0</strong>: <code>Pout = 2 + OutputPower</code> → <strong>+2 dBm
+  (~1,6 mW)</strong>, o mínimo.</li>
+</ul>
+<p>Política de bancada: (1) PA transmitindo em carga ruim/aberta reflete
+potência de volta — a +2 dBm é inofensivo com cadeia de antena não
+comprovada; (2) alcance de sobra até o SDR; (3) com potência fixa e
+conhecida, o TX virou instrumento de medida do BPF.</p>
+<h3 id="a-fifo-desfazendo-a-imagem-de-fila">A FIFO — desfazendo a imagem de "fila"<a class="headerlink" href="#a-fifo-desfazendo-a-imagem-de-fila" title="Permanent link">&para;</a></h3>
+<p>A "FIFO" do SX1278 <strong>não</strong> é fila de mensagens que acumula pedidos: é um
+<strong>bloco de 256 B de RAM com ponteiro auto-incrementante</strong> — buffer de
+rascunho de <strong>um pacote por vez</strong>. Fluxo:</p>
+<ol>
+<li><code>FifoAddrPtr = FifoTxBase</code> (cursor no início da área de TX);</li>
+<li>despeja N bytes em <code>REG_FIFO</code> — o cursor avança sozinho (o
+   <code>escrever_fifo</code> manda o endereço uma vez e os bytes em rajada);</li>
+<li><code>PayloadLength = N</code>;</li>
+<li><code>OPMODE_TX</code> — só agora o modem lê a RAM, monta o quadro (preâmbulo +
+   header + payload + CRC) e transmite;</li>
+<li>TxDone → FIFO livre para o próximo.</li>
+</ol>
+<p>Quem controla: o firmware escreve via SPI; o modem lê quando comandado.
+Não há limiar de acúmulo nem envio automático. Os 256 B são compartilhados
+TX/RX (default: metade para cada); o driver põe <code>FIFO_TX_BASE = 0x00</code> para
+dar tudo ao TX, já que este firmware não recebe.</p>
+<h3 id="modos-de-operacao-regopmode-3-bits-baixos">Modos de operação (RegOpMode, 3 bits baixos)<a class="headerlink" href="#modos-de-operacao-regopmode-3-bits-baixos" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Modo</th>
+<th>Bits</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SLEEP</td>
+<td>000</td>
+<td>tudo desligado; <strong>único</strong> em que se troca FSK↔LoRa</td>
+</tr>
+<tr>
+<td>STDBY</td>
+<td>001</td>
+<td>osciladores ligados, ocioso — onde se configura</td>
+</tr>
+<tr>
+<td>FSTX</td>
+<td>010</td>
+<td>sintetizador ligando p/ TX (transitório, automático)</td>
+</tr>
+<tr>
+<td>TX</td>
+<td>011</td>
+<td>transmite; ao fim <strong>volta a STDBY sozinho</strong> + TxDone</td>
+</tr>
+<tr>
+<td>FSRX</td>
+<td>100</td>
+<td>sintetizador ligando p/ RX (transitório)</td>
+</tr>
+<tr>
+<td>RXCONTINUOUS</td>
+<td>101</td>
+<td>recebe sem parar</td>
+</tr>
+<tr>
+<td>RXSINGLE</td>
+<td>110</td>
+<td>recebe um quadro ou dá timeout</td>
+</tr>
+<tr>
+<td>CAD</td>
+<td>111</td>
+<td>detecção rápida de preâmbulo gastando quase nada</td>
+</tr>
+</tbody>
+</table>
+<p>O firmware usa SLEEP, STDBY e TX; os modos RX ficam com o GNU Radio.</p>
+<h3 id="lora_config_modem-linha-a-linha"><code>lora_config_modem()</code> linha a linha<a class="headerlink" href="#lora_config_modem-linha-a-linha" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>OPMODE_LORA_LF (0x88)</code>: LongRangeMode=1 (LoRa) + LowFrequencyModeOn
+  (banda 433) + SLEEP — o bit LoRa <strong>só é aceito em SLEEP</strong>.</li>
+<li><code>REG_FRF</code> ×3: portadora em 24 bits, passo <code>Fxosc/2^19</code> ≈ 61 Hz;
+  <code>433e6 × 2^19 / 32e6 = 0x6C4000</code>. Shifts + <code>&amp; 0xFF</code> fatiam em
+  MSB/MID/LSB. 433,0<strong>0</strong> de propósito (longe dos portões em 433,92).</li>
+<li><code>REG_PA_CONFIG = 0x80</code>: PA_BOOST, +2 dBm (acima).</li>
+<li><code>MODEM_CONFIG1 = 0x72</code> (<code>0111 001 0</code>): BW 125 kHz | CR 4/5 | header
+  <strong>explícito</strong> (o quadro carrega tamanho/CR/CRC — é de onde o
+  <code>header_decoder</code> do RX tira tudo).</li>
+<li><code>MODEM_CONFIG2 = 0xC4</code> (<code>1100 x1xx</code>): <strong>SF12</strong> (símbolo de 32,8 ms,
+  didático — chirps visíveis no waterfall) | CRC do payload (PHY) ligado.</li>
+<li><code>MODEM_CONFIG3 = 0x0C</code>: <strong>LDRO</strong> (obrigatório com símbolo &gt; 16 ms — a
+  deriva dos cristais acumularia dentro do símbolo; sacrifica 2 bits/símbolo
+  por margem) + AgcAutoOn. <strong>LDRO não viaja no header</strong> — as pontas
+  combinam por fora (o Python espelha o critério do datasheet).</li>
+<li><code>OPMODE_STANDBY</code>: configurado, pronto para o primeiro TX.</li>
+</ul>
+<h3 id="lora_tx-passo-a-passo"><code>lora_tx()</code> passo a passo<a class="headerlink" href="#lora_tx-passo-a-passo" title="Permanent link">&para;</a></h3>
+<ol>
+<li>valida <code>len</code> (1–32; limite do buffer local <code>tx[33]</code>);</li>
+<li>STANDBY defensivo;</li>
+<li>ritual da FIFO (base, cursor, rajada, PayloadLength);</li>
+<li><code>IRQ_FLAGS = 0xFF</code> — limpa flags pendentes (<strong>write-1-to-clear</strong>:
+   escrever 1 apaga o bit) para não confundir TxDone velho com novo;</li>
+<li><code>OPMODE_TX</code> — o silício trabalha sozinho (~1,3 s em SF12) e volta a
+   STANDBY com TxDone ligado;</li>
+<li><strong>polling educado</strong>: a cada 10 ms (<code>vTaskDelay</code> — nunca busy-wait) lê
+   <code>RegIrqFlags</code> e testa <code>irq &amp; IRQ_TX_DONE</code> (AND como <em>teste</em> de bit);
+   timeout de 5 s;</li>
+<li>limpa flags de novo e devolve o tempo em <code>*ms_no_ar</code> (~990 ms, batendo
+   com a fórmula do datasheet).</li>
+</ol>
+<p>Alternativa ao polling: o pino DIO0 pulsa no TxDone (interrupção). Fiado
+(GPIO 26) mas não usado — "uma coisa nova por vez".</p>
+<h3 id="maximo-de-informacao-por-pacote">Máximo de informação por pacote<a class="headerlink" href="#maximo-de-informacao-por-pacote" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Protocolo</strong>: campo de tamanho (registrador e header) tem 8 bits →
+   <strong>255 B</strong>;</li>
+<li><strong>Hardware</strong>: FIFO de 256 B — payload inteiro precisa caber;</li>
+<li><strong>Driver do projeto</strong>: 32 B (buffer local); o pacote usa 18;</li>
+<li><strong>Prática</strong>: tempo no ar — 18 B ≈ 1,3 s em SF12; 255 B ≈ 9 s
+   (canal ocupado, energia, duty cycle regulatório das bandas ISM). LoRa é
+   para pacotes pequenos e raros.</li>
+</ol>
+<h3 id="bibliotecas-prontas-vs-driver-na-mao">Bibliotecas prontas (vs driver na mão)<a class="headerlink" href="#bibliotecas-prontas-vs-driver-na-mao" title="Permanent link">&para;</a></h3>
+<p>Existem: <strong>RadioLib</strong> (a mais completa; HAL portável com exemplos
+ESP-IDF), <strong>dernasherbrezon/sx127x</strong> (componente nativo do IDF, no
+Component Registry), <strong>nopnop2002/esp-idf-sx127x</strong> (porte simples). Dariam
+RX, DIO0, mais modos. Mas o driver na mão foi decisão consciente do plano
+(aprender SPI e a anatomia do rádio) e, para TX de 18 B a cada 10 s, é
+suficiente e auditável ponta a ponta. Num produto: RadioLib ou o sx127x do
+registry.</p>
+<h2 id="o-contrato-entre-as-pontas">O contrato entre as pontas<a class="headerlink" href="#o-contrato-entre-as-pontas" title="Permanent link">&para;</a></h2>
+<h3 id="sync-word-0x12">Sync word 0x12<a class="headerlink" href="#sync-word-0x12" title="Permanent link">&para;</a></h3>
+<p>Byte após o preâmbulo, <strong>identificador de rede</strong>: o RX descarta quadros de
+sync word diferente antes de decodificar. 0x12 = default do chip ("rede
+privada" — o firmware nunca escreve <code>RegSyncWord</code>, vale o reset default);
+0x34 = LoRaWAN público. Divergência entre as pontas = o <code>frame_sync</code> não
+reconhece nada. Não é segurança; é filtro de coexistência.</p>
+<h3 id="dois-crcs-por-design-a-duplicacao-cpython">Dois CRCs por design + a duplicação C/Python<a class="headerlink" href="#dois-crcs-por-design-a-duplicacao-cpython" title="Permanent link">&para;</a></h3>
+<p>Dois CRCs <strong>diferentes com papéis diferentes</strong>:</p>
+<ul>
+<li><strong>CRC do quadro LoRa (PHY)</strong>: ligado no <code>MODEM_CONFIG2</code>, conferido pelo
+  bloco <code>crc_verif</code> <strong>da biblioteca</strong> (o "CRC valid!"). Protege só o trecho
+  aéreo.</li>
+<li><strong>CRC16-CCITT fim-a-fim do payload</strong>: calculado em
+  <code>common/pacote/crc16.c</code> (TX) e conferido pelo <code>desserializar()</code> <strong>do
+  nosso código</strong> (RX). Continua verificável depois do MQTT e do banco.</li>
+</ul>
+<p>A implementação existe <strong>duas vezes</strong> (C e Python) porque as pontas rodam
+em runtimes que não compartilham código (Xtensa bare-metal vs CPython em
+container). Centralizar (ctypes/cffi, geração de código) custaria mais que
+10 linhas de algoritmo valem. A proteção contra divergência é <strong>um vetor de
+teste compartilhado</strong>: <code>crc16("123456789") == 0x29B1</code> (valor canônico do
+CRC16-CCITT-FALSE), verificado no boot das duas pontas
+(<code>pacote_selfcheck()</code> no firmware, <code>assert</code> no <code>main()</code> do Python). <strong>O
+contrato não é o código — é o vetor de teste.</strong></p>
+<h3 id="crc_verif2-false"><code>crc_verif(2, False)</code><a class="headerlink" href="#crc_verif2-false" title="Permanent link">&para;</a></h3>
+<p>Bloco da biblioteca: confere o CRC do PHY; <code>2</code> = imprime o payload em hex
+no stdout (conferência lado a lado com o <code>ESP_LOG_BUFFER_HEX</code> da estação);
+<code>False</code> = não anexa o resultado à saída. "A ponte é quem valida de
+verdade, via CRC16 próprio."</p>
+<h3 id="payload_de_pmt-resgatando-binario-de-uma-string"><code>payload_de_pmt()</code> — resgatando binário de uma "string"<a class="headerlink" href="#payload_de_pmt-resgatando-binario-de-uma-string" title="Permanent link">&para;</a></h3>
+<p><strong>PMT</strong> (Polymorphic Type) é o formato de mensagens entre blocos do GNU
+Radio. O <code>crc_verif</code> publica o payload como <strong>símbolo PMT</strong> (string C++);
+converter com <code>str()</code> assumiria UTF-8 e corromperia/explodiria com os 18
+bytes binários. <code>pmt.serialize_str(msg)</code> devolve o <strong>formato de fio</strong> do
+PMT sem interpretar nada: <code>[opcode 1 B][tamanho u16 big-endian][bytes
+crus]</code> — a função pula o opcode, lê o tamanho, fatia e valida. Contorno de
+fronteira de linguagem: C++ guardou binário numa "string", o Python o
+resgata sem passar por decodificação de texto.</p>
+<h3 id="variaveis-de-ambiente-ldconfig">Variáveis de ambiente ≠ <code>ldconfig</code><a class="headerlink" href="#variaveis-de-ambiente-ldconfig" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>ldconfig</code></strong> só atualiza o <strong>cache do linker dinâmico</strong>
+  (<code>/etc/ld.so.cache</code>) depois que o <code>cmake --install</code> despejou <code>.so</code> novos
+  — é o que faz o Python achar <code>libgnuradio-lora_sdr.so</code> em runtime.</li>
+<li><strong>As variáveis</strong> (<code>LORA_SF</code>, <code>MQTT_HOST</code>...) vêm do
+  <code>docker-compose.yml</code> (seção <code>environment:</code>) ou dos defaults do próprio
+  código (<code>os.environ.get("LORA_SF", 12)</code>). Precedência: default no código
+  ← <code>ENV</code> do Dockerfile ← <code>environment</code> do compose.</li>
+</ul>
+<h3 id="signalsignal-sinal-de-radio"><code>signal.signal</code> ≠ sinal de rádio<a class="headerlink" href="#signalsignal-sinal-de-radio" title="Permanent link">&para;</a></h3>
+<p>Colisão de vocabulário: são <strong>sinais do sistema operacional</strong> — <code>SIGINT</code> =
+Ctrl+C, <code>SIGTERM</code> = o que o <code>docker compose down</code> manda. Registram
+<code>parar()</code> para desligamento limpo (<code>tb.stop()</code> → <code>tb.wait()</code> →
+<code>loop_stop()</code>). O sinal de RF entra por outro lugar: o bloco
+<strong><code>osmosdr.source</code></strong> (via libusb).</p>
+<h3 id="tbrun"><code>tb.run()</code><a class="headerlink" href="#tbrun" title="Permanent link">&para;</a></h3>
+<p>Implementado no <strong>GNU Radio</strong> (<code>gr.top_block</code> — binding fino sobre o
+runtime <strong>C++</strong>). Faz <code>start()</code> + <code>wait()</code>: o <code>start()</code> materializa o grafo
+(aloca buffers — honrando o <code>set_min_output_buffer</code> — e sobe uma thread
+por bloco); o <code>wait()</code> bloqueia até o flowgraph parar. Como a fonte é um
+rádio que nunca "acaba", <code>run()</code> é o loop principal do serviço — quem o
+encerra é o <code>tb.stop()</code> do handler de SIGTERM. O trabalho pesado roda nas
+threads C++; o Python só montou o grafo e trata as mensagens da ponte.</p>
+<h3 id="papel-do-receptor_lorapy">Papel do <code>receptor_lora.py</code><a class="headerlink" href="#papel-do-receptor_lorapy" title="Permanent link">&para;</a></h3>
+<p><strong>O gateway inteiro em um arquivo</strong>: (1) monta e roda o flowgraph (réplica
+do <code>lora_RX.py</code> oficial com RTL-SDR via osmosdr + workaround do buffer);
+(2) espelha o contrato do modem por variáveis de ambiente casadas 1:1 com o
+<code>lora.c</code> (inclusive LDRO pelo mesmo critério); (3) ponte para o mundo IP —
+valida CRC16, desserializa os 18 B e publica JSON no Mosquitto com retain.
+Rádio entra, JSON sai.</p>
+<h3 id="teste_todos-vs-modo_estacao"><code>TESTE_TODOS</code> vs <code>MODO_ESTACAO</code><a class="headerlink" href="#teste_todos-vs-modo_estacao" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>TESTE_TODOS (bancada)</th>
+<th>MODO_ESTACAO (produção)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Objetivo</td>
+<td>validar hardware no serial</td>
+<td>operar</td>
+</tr>
+<tr>
+<td>Ciclo</td>
+<td>fixo 5 s</td>
+<td><code>CONFIG_ESTACAO_INTERVALO_S</code> (5–3600 s)</td>
+</tr>
+<tr>
+<td>Saída</td>
+<td>log legível</td>
+<td><code>pacote_t</code> de 18 B com flags e CRC</td>
+</tr>
+<tr>
+<td>Rádio</td>
+<td>só o autoteste do boot</td>
+<td><strong>transmite</strong> cada pacote</td>
+</tr>
+</tbody>
+</table>
+<p>Bancada = "mostre tudo, não transmita"; estação = "empacote e transmita".
+Ambos compartilham o <code>autoteste()</code> do boot.</p>
+<h3 id="flag-de-erro-do-reed-vento-nao-existe-de-proposito">Flag de erro do reed (vento): não existe, de propósito<a class="headerlink" href="#flag-de-erro-do-reed-vento-nao-existe-de-proposito" title="Permanent link">&para;</a></h3>
+<p><code>pacote.flags</code> só tem bits para BMP280/LDR/chuva/DHT11. O reed é contador
+de pulsos por interrupção — <strong>não há modo de falha detectável em
+runtime</strong>: <code>sensor_vento_coletar_pulsos()</code> nem retorna <code>esp_err_t</code>; fio
+solto = 0 pulsos = indistinguível de calmaria. No <code>[SELFTEST]</code>, <code>vento OK</code>
+atesta só a inicialização (GPIO + ISR). Bits 4–7 estão reservados, mas uma
+flag nunca ligaria na prática.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Voltar para o topo
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "search.highlight"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "mais 1 nesta p\u00e1gina", "search.result.more.other": "# mais nesta p\u00e1gina", "search.result.none": "Nenhum documento encontrado", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+    
+  </body>
+</html>
