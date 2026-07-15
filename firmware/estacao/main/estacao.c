@@ -46,13 +46,17 @@ static bool s_lora_ok = false;
 // nao aceita reinicializar o barramento).
 static esp_err_t lora_autoteste(void) {
   esp_err_t err = lora_init();
-  if (err != ESP_OK) return err;
+  if (err != ESP_OK)
+    return err;
   uint8_t versao = 0;
   err = lora_ler_reg(LORA_REG_VERSION, &versao);
-  if (err != ESP_OK) return err;
-  if (versao != 0x12) return ESP_ERR_INVALID_RESPONSE;
+  if (err != ESP_OK)
+    return err;
+  if (versao != 0x12)
+    return ESP_ERR_INVALID_RESPONSE;
   err = lora_config_modem();
-  if (err != ESP_OK) return err;
+  if (err != ESP_OK)
+    return err;
   s_lora_ok = true;
   return ESP_OK;
 }
@@ -117,17 +121,21 @@ void app_main(void) {
     bool erro_ciclo = false;
 
     float t_bmp = 0, p_hpa = 0;
-    if (sensor_bmp280_ler(&t_bmp, &p_hpa) != ESP_OK) erro_ciclo = true;
+    if (sensor_bmp280_ler(&t_bmp, &p_hpa) != ESP_OK)
+      erro_ciclo = true;
 
     int luz = -1;
-    if (sensor_ldr_ler(&luz) != ESP_OK) erro_ciclo = true;
+    if (sensor_ldr_ler(&luz) != ESP_OK)
+      erro_ciclo = true;
 
     int chuva_ao = -1;
     bool molhado = false;
-    if (sensor_chuva_ler(&chuva_ao, &molhado) != ESP_OK) erro_ciclo = true;
+    if (sensor_chuva_ler(&chuva_ao, &molhado) != ESP_OK)
+      erro_ciclo = true;
 
     float umid = 0, t_dht = 0;
-    if (sensor_dht11_ler(&umid, &t_dht) != ESP_OK) erro_ciclo = true;
+    if (sensor_dht11_ler(&umid, &t_dht) != ESP_OK)
+      erro_ciclo = true;
 
     uint32_t pulsos = sensor_vento_coletar_pulsos();
 
@@ -171,8 +179,8 @@ void app_main(void) {
 
     float t_bmp = 0, p_hpa = 0;
     if (sensor_bmp280_ler(&t_bmp, &p_hpa) == ESP_OK) {
-      pacote.temp_x100 = (int16_t)(t_bmp * 100.0f);   // ponto fixo
-      pacote.press_pa = (uint32_t)(p_hpa * 100.0f);   // hPa -> Pa
+      pacote.temp_x100 = (int16_t)(t_bmp * 100.0f); // ponto fixo
+      pacote.press_pa = (uint32_t)(p_hpa * 100.0f); // hPa -> Pa
     } else {
       pacote.temp_x100 = 0;
       pacote.press_pa = 0;
@@ -230,8 +238,8 @@ void app_main(void) {
     }
 
     led_status_definir((!s_lora_ok || tx_falhou) ? LED_STATUS_FALHA
-                       : pacote.flags == 0     ? LED_STATUS_OK
-                                               : LED_STATUS_ERRO_SENSOR);
+                       : pacote.flags == 0       ? LED_STATUS_OK
+                                                 : LED_STATUS_ERRO_SENSOR);
   }
 }
 
@@ -393,9 +401,13 @@ void app_main(void) {
     if (err != ESP_OK) {
       ESP_LOGE(TAG, "falha na transacao SPI: %s", esp_err_to_name(err));
     } else if (versao == 0x12) {
-      ESP_LOGI(TAG, "RegVersion=0x%02X — SX1278 respondendo, fiacao OK", versao);
+      ESP_LOGI(TAG, "RegVersion=0x%02X — SX1278 respondendo, fiacao OK",
+               versao);
     } else {
-      ESP_LOGW(TAG, "RegVersion=0x%02X (esperado 0x12) — radio mudo, conferir fiacao", versao);
+      ESP_LOGW(
+          TAG,
+          "RegVersion=0x%02X (esperado 0x12) — radio mudo, conferir fiacao",
+          versao);
     }
     vTaskDelay(pdMS_TO_TICKS(2000));
   }
